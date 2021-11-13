@@ -5,121 +5,166 @@ const char *vertexShader = "shader.vs";
 const char *fragmentShader = "shader.fs";
 int th = 0;     //  Azimuth of view angle
 int ph = 0;     //  Elevation of view angle
+int Th = 0;     //  Azimuth of view angle
+int Ph = 0;     //  Elevation of view angle
 int fov = 55;   //  Field of view (for perspective)
 double asp = 1; //  Aspect ratio
 double dim = 3; //  Size of world
 int mode = 1;
-
-struct Vector3f
+void key(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    float x;
-    float y;
-    float z;
+    //  Discard key releases (keeps PRESS and REPEAT)
+    if (action == GLFW_RELEASE)
+        return;
 
-    Vector3f() {}
+    //  Check for shift
+    int shift = (mods & GLFW_MOD_SHIFT);
 
-    Vector3f(float _x, float _y, float _z)
-    {
-        x = _x;
-        y = _y;
-        z = _z;
-    }
-
-    Vector3f(const float *pFloat)
-    {
-        x = pFloat[0];
-        y = pFloat[0];
-        z = pFloat[0];
-    }
-
-    Vector3f(float f)
-    {
-        x = y = z = f;
-    }
-
-    Vector3f &operator+=(const Vector3f &r)
-    {
-        x += r.x;
-        y += r.y;
-        z += r.z;
-
-        return *this;
-    }
-
-    Vector3f &operator-=(const Vector3f &r)
-    {
-        x -= r.x;
-        y -= r.y;
-        z -= r.z;
-
-        return *this;
-    }
-
-    Vector3f &operator*=(float f)
-    {
-        x *= f;
-        y *= f;
-        z *= f;
-
-        return *this;
-    }
-
-    operator const float *() const
-    {
-        return &(x);
-    }
-
-    Vector3f Cross(const Vector3f &v) const;
-
-    Vector3f &Normalize();
-
-    void Rotate(float Angle, const Vector3f &Axis);
-
-    void Print() const
-    {
-        printf("(%.02f, %.02f, %.02f)", x, y, z);
-    }
-};
+    //  Exit on ESC
+    if (key == GLFW_KEY_ESCAPE)
+        glfwSetWindowShouldClose(window, 1);
+    //  Reset view angle
+    else if (key == GLFW_KEY_0)
+        th = ph = 0;
+    //  Switch projection mode
+    else if (key == GLFW_KEY_P)
+        mode = 1 - mode;
+    //  Increase/decrease spot azimuth
+    else if (key == GLFW_KEY_LEFT_BRACKET && !shift)
+        Ph -= 5;
+    else if (key == GLFW_KEY_RIGHT_BRACKET && !shift)
+        Ph += 5;
+    //  Increase/decrease asimuth
+    else if (key == GLFW_KEY_RIGHT)
+        th += 5;
+    else if (key == GLFW_KEY_LEFT)
+        th -= 5;
+    //  Increase/decrease elevation
+    else if (key == GLFW_KEY_UP)
+        ph += 5;
+    else if (key == GLFW_KEY_DOWN)
+        ph -= 5;
+    //  PageUp key - increase dim
+    else if (key == GLFW_KEY_PAGE_DOWN)
+        dim += 0.1;
+    //  PageDown key - decrease dim
+    else if (key == GLFW_KEY_PAGE_UP && dim > 1)
+        dim -= 0.1;
+    //  Wrap angles
+    Th %= 360;
+    Ph %= 360;
+    th %= 360;
+    ph %= 360;
+    //  Update projection
+    Project(mode ? fov : 0, asp, dim, th, ph, mode);
+}
 
 static void error_callback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
 
-static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+const int Ni=60;
+//  Vertex coordinates and colors
+const float xyzrgb[] =
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-    if (key == GLFW_KEY_M)
-        std::cout << "M KEY PRESSED\n";
-    Project(fov, asp, dim, th, ph, mode);
+    0.276, 0.851, 0.447,  0.0,0.0,1.0,
+    0.894, 0.000, 0.447,  0.0,0.0,1.0,
+    0.000, 0.000, 1.000,  0.0,0.0,1.0,
+   -0.724, 0.526, 0.447,  0.0,1.0,0.0,
+    0.276, 0.851, 0.447,  0.0,1.0,0.0,
+    0.000, 0.000, 1.000,  0.0,1.0,0.0,
+   -0.724,-0.526, 0.447,  0.0,1.0,1.0,
+   -0.724, 0.526, 0.447,  0.0,1.0,1.0,
+    0.000, 0.000, 1.000,  0.0,1.0,1.0,
+    0.276,-0.851, 0.447,  1.0,0.0,1.0,
+   -0.724,-0.526, 0.447,  1.0,0.0,1.0,
+    0.000, 0.000, 1.000,  1.0,0.0,1.0,
+    0.894, 0.000, 0.447,  1.0,1.0,0.0,
+    0.276,-0.851, 0.447,  1.0,1.0,0.0,
+    0.000, 0.000, 1.000,  1.0,1.0,0.0,
+    0.000, 0.000,-1.000,  0.0,0.0,1.0,
+    0.724, 0.526,-0.447,  0.0,0.0,1.0,
+   -0.276, 0.851,-0.447,  0.0,0.0,1.0,
+    0.000, 0.000,-1.000,  0.0,1.0,0.0,
+   -0.276, 0.851,-0.447,  0.0,1.0,0.0,
+   -0.894, 0.000,-0.447,  0.0,1.0,0.0,
+    0.000, 0.000,-1.000,  0.0,1.0,1.0,
+   -0.894, 0.000,-0.447,  0.0,1.0,1.0,
+   -0.276,-0.851,-0.447,  0.0,1.0,1.0,
+    0.000, 0.000,-1.000,  1.0,0.0,0.0,
+   -0.276,-0.851,-0.447,  1.0,0.0,0.0,
+    0.724,-0.526,-0.447,  1.0,0.0,0.0,
+    0.000, 0.000,-1.000,  1.0,0.0,1.0,
+    0.724,-0.526,-0.447,  1.0,0.0,1.0,
+    0.724, 0.526,-0.447,  1.0,0.0,1.0,
+    0.894, 0.000, 0.447,  1.0,1.0,0.0,
+    0.276, 0.851, 0.447,  1.0,1.0,0.0,
+    0.724, 0.526,-0.447,  1.0,1.0,0.0,
+    0.276, 0.851, 0.447,  0.0,0.0,1.0,
+   -0.724, 0.526, 0.447,  0.0,0.0,1.0,
+   -0.276, 0.851,-0.447,  0.0,0.0,1.0,
+   -0.724, 0.526, 0.447,  0.0,1.0,0.0,
+   -0.724,-0.526, 0.447,  0.0,1.0,0.0,
+   -0.894, 0.000,-0.447,  0.0,1.0,0.0,
+   -0.724,-0.526, 0.447,  0.0,1.0,1.0,
+    0.276,-0.851, 0.447,  0.0,1.0,1.0,
+   -0.276,-0.851,-0.447,  0.0,1.0,1.0,
+    0.276,-0.851, 0.447,  1.0,0.0,0.0,
+    0.894, 0.000, 0.447,  1.0,0.0,0.0,
+    0.724,-0.526,-0.447,  1.0,0.0,0.0,
+    0.276, 0.851, 0.447,  1.0,0.0,1.0,
+   -0.276, 0.851,-0.447,  1.0,0.0,1.0,
+    0.724, 0.526,-0.447,  1.0,0.0,1.0,
+   -0.724, 0.526, 0.447,  1.0,1.0,0.0,
+   -0.894, 0.000,-0.447,  1.0,1.0,0.0,
+   -0.276, 0.851,-0.447,  1.0,1.0,0.0,
+   -0.724,-0.526, 0.447,  0.0,0.0,1.0,
+   -0.276,-0.851,-0.447,  0.0,0.0,1.0,
+   -0.894, 0.000,-0.447,  0.0,0.0,1.0,
+    0.276,-0.851, 0.447,  0.0,1.0,0.0,
+    0.724,-0.526,-0.447,  0.0,1.0,0.0,
+   -0.276,-0.851,-0.447,  0.0,1.0,0.0,
+    0.894, 0.000, 0.447,  0.0,1.0,1.0,
+    0.724, 0.526,-0.447,  0.0,1.0,1.0,
+    0.724,-0.526,-0.447,  0.0,1.0,1.0,
+};
 
+/*
+ *  Draw icosahedron using client side arrays
+ *     at (x,y,z)
+ *     size  s
+ *     rotated th about the x axis
+ */
+static void icosahedron2(float x,float y,float z,float s,float th)
+{
+   //  Define vertexes
+   glVertexPointer(3,GL_FLOAT,6*sizeof(float),xyzrgb);
+   glEnableClientState(GL_VERTEX_ARRAY);
+   //  Define colors for each vertex
+   //  Draw icosahedron
+   glPushMatrix();
+   glTranslatef(x,y,z);
+   glRotatef(th,1,0,0);
+   glScalef(s,s,s);
+   glDrawArrays(GL_TRIANGLES,0,Ni);
+   glPopMatrix();
+   //  Disable vertex array
+   glDisableClientState(GL_VERTEX_ARRAY);
+   //  Disable color array
+   glDisableClientState(GL_COLOR_ARRAY);
 }
 
-
-unsigned int VBO;
-
-static void RenderSceneCB()
+void reshape(GLFWwindow *window, int width, int height)
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glLoadIdentity();
-    perspectiveMode(ph, th, dim, mode);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDisableVertexAttribArray(0);
-}
-
-static void CreateVertexBuffer()
-{
-    const float Vertices[] = {
-                             -.5f, -.5f, 0.0f,
-                              .5f, -.5f, 0.0f,
-                              0.0f, .5f, 0.0f };
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+    //  Get framebuffer dimensions (makes Apple work right)
+    glfwGetFramebufferSize(window, &width, &height);
+    //  Ratio of the width to the height of the window
+    asp = (height > 0) ? (double)width / height : 1;
+    //  Set the viewport to the entire window
+    glViewport(0, 0, width, height);
+    //  Set projection
+    Project(mode ? fov : 0, asp, dim, th, ph, mode);
 }
 
 int main(void)
@@ -138,23 +183,21 @@ int main(void)
     }
     glfwMakeContextCurrent(window);
     glewInit();
-
-
-    glfwSetKeyCallback(window, key_callback);    
     glfwSwapInterval(1);
+    glfwSetWindowSizeCallback(window, reshape);
+    int width, height;
 
-    // NOTE: OpenGL error checks have been omitted for brevity
-    // top
-    CreateVertexBuffer();
+    glfwGetWindowSize(window, &width, &height);
+    reshape(window, width, height);
+    glfwSetKeyCallback(window, key);
+    
     CompileShaders(vertexShader, fragmentShader);
+    
     while (!glfwWindowShouldClose(window))
     {
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        glViewport(0, 0, width, height);
-        Project(fov, asp, dim, th, ph, mode);
-        RenderSceneCB();
+        icosahedron2(0,0,0, 1, 0);
         glfwSwapBuffers(window);
+        glUseProgram(0);
         glfwPollEvents();
     }
 }
