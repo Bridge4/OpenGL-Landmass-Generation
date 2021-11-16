@@ -13,26 +13,22 @@ void perspectiveGL(GLdouble fovY, GLdouble aspect, GLdouble zNear, GLdouble zFar
     glFrustum(-fW, fW, -fH, fH, zNear, zFar);
 }
 
-void Project(double fov, double asp, double dim, int th, int ph, int mode)
+void Project(double fov,double asp,double dim)
 {
-    //  Tell OpenGL we want to manipulate the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    //  Undo previous transformations
-    glLoadIdentity();
-    //  Perspective projection
-    if (mode == 1)
-    {
-        gluPerspective(fov, asp, dim / 16, 16 * dim);
-    }
-    //  Orthogonal projection
-    else
-    {
-        glOrtho(-asp * dim, +asp * dim, -dim, +dim, -dim, +dim);
-    }
-    //  Switch to manipulating the model matrix
-    glMatrixMode(GL_MODELVIEW);
-    //  Undo previous transformations
-    glLoadIdentity();
+   //  Tell OpenGL we want to manipulate the projection matrix
+   glMatrixMode(GL_PROJECTION);
+   //  Undo previous transformations
+   glLoadIdentity();
+   //  Perspective transformation
+   if (fov)
+      gluPerspective(fov,asp,dim/16,16*dim);
+   //  Orthogonal transformation
+   else
+      glOrtho(-asp*dim,asp*dim,-dim,+dim,-dim,+dim);
+   //  Switch to manipulating the model matrix
+   glMatrixMode(GL_MODELVIEW);
+   //  Undo previous transformations
+   glLoadIdentity();
 }
 
 void perspectiveMode(int ph, int th, double dim, int mode)

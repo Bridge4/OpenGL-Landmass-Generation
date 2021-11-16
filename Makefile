@@ -12,8 +12,8 @@ else
 #  OSX
 ifeq "$(shell uname)" "Darwin"
 RES=$(shell uname -r|sed -E 's/(.).*/\1/'|tr 12 21)
-CFLG=-O3 -Wall -Wno-deprecated-declarations -DRES=$(RES)
-LIBS=-lglfw -framework Cocoa -framework OpenGL -framework IOKit
+CFLG=-O3 -Wall -Wno-deprecated-declarations -DUSEGLEW -DRES=$(RES)
+LIBS=-lglew -lglfw -framework Cocoa -framework OpenGL -framework IOKit
 #  Linux/Unix/Solaris
 else
 CFLG=-O3 -Wall
@@ -27,9 +27,9 @@ endif
 final.o: final.cpp CSCIx229.h compileshaders.h
 
 #  Create archive
-CSCIx229.a:final.o projection.o compileshaders.o
+CSCIx229.a:final.o compileshaders.o
 	ar -rcs $@ $^
-projection.a: final.o CSCIx229.o
+
 compileshaders.a: final.o CSCIx229.o
 # Compile rules
 .c.o:
@@ -40,10 +40,9 @@ compileshaders.a: final.o CSCIx229.o
 #  Link
 final:final.o   CSCIx229.a
 	g++ $(CFLG) -o $@ $^  $(LIBS)
-projection:projection.o final.o compileshaders.o CSCIx229.a 
-	g++ $(CFLG) -o $@ $^  $(LIBS)
 
-compileshaders:compileshaders.o projection.o final.o CSCIx229.a
+
+compileshaders:compileshaders.o final.o CSCIx229.a
 	g++ $(CFLG) -o $@ $^  $(LIBS)
 #  Clean
 clean:

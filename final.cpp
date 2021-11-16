@@ -10,7 +10,11 @@ int Ph = 0;     //  Elevation of view angle
 int fov = 55;   //  Field of view (for perspective)
 double asp = 1; //  Aspect ratio
 double dim = 3; //  Size of world
-int mode = 1;
+int mode = 0;
+unsigned int vao;
+unsigned int vbo;
+unsigned int vao1;
+unsigned int vbo1;
 void key(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     //  Discard key releases (keeps PRESS and REPEAT)
@@ -56,103 +60,12 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods)
     th %= 360;
     ph %= 360;
     //  Update projection
-    Project(mode ? fov : 0, asp, dim, th, ph, mode);
+    Project(mode ? fov : 0, asp, dim);
 }
 
 static void error_callback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
-}
-
-const int Ni=60;
-//  Vertex coordinates and colors
-const float xyzrgb[] =
-{
-    0.276, 0.851, 0.447,  0.0,0.0,1.0,
-    0.894, 0.000, 0.447,  0.0,0.0,1.0,
-    0.000, 0.000, 1.000,  0.0,0.0,1.0,
-   -0.724, 0.526, 0.447,  0.0,1.0,0.0,
-    0.276, 0.851, 0.447,  0.0,1.0,0.0,
-    0.000, 0.000, 1.000,  0.0,1.0,0.0,
-   -0.724,-0.526, 0.447,  0.0,1.0,1.0,
-   -0.724, 0.526, 0.447,  0.0,1.0,1.0,
-    0.000, 0.000, 1.000,  0.0,1.0,1.0,
-    0.276,-0.851, 0.447,  1.0,0.0,1.0,
-   -0.724,-0.526, 0.447,  1.0,0.0,1.0,
-    0.000, 0.000, 1.000,  1.0,0.0,1.0,
-    0.894, 0.000, 0.447,  1.0,1.0,0.0,
-    0.276,-0.851, 0.447,  1.0,1.0,0.0,
-    0.000, 0.000, 1.000,  1.0,1.0,0.0,
-    0.000, 0.000,-1.000,  0.0,0.0,1.0,
-    0.724, 0.526,-0.447,  0.0,0.0,1.0,
-   -0.276, 0.851,-0.447,  0.0,0.0,1.0,
-    0.000, 0.000,-1.000,  0.0,1.0,0.0,
-   -0.276, 0.851,-0.447,  0.0,1.0,0.0,
-   -0.894, 0.000,-0.447,  0.0,1.0,0.0,
-    0.000, 0.000,-1.000,  0.0,1.0,1.0,
-   -0.894, 0.000,-0.447,  0.0,1.0,1.0,
-   -0.276,-0.851,-0.447,  0.0,1.0,1.0,
-    0.000, 0.000,-1.000,  1.0,0.0,0.0,
-   -0.276,-0.851,-0.447,  1.0,0.0,0.0,
-    0.724,-0.526,-0.447,  1.0,0.0,0.0,
-    0.000, 0.000,-1.000,  1.0,0.0,1.0,
-    0.724,-0.526,-0.447,  1.0,0.0,1.0,
-    0.724, 0.526,-0.447,  1.0,0.0,1.0,
-    0.894, 0.000, 0.447,  1.0,1.0,0.0,
-    0.276, 0.851, 0.447,  1.0,1.0,0.0,
-    0.724, 0.526,-0.447,  1.0,1.0,0.0,
-    0.276, 0.851, 0.447,  0.0,0.0,1.0,
-   -0.724, 0.526, 0.447,  0.0,0.0,1.0,
-   -0.276, 0.851,-0.447,  0.0,0.0,1.0,
-   -0.724, 0.526, 0.447,  0.0,1.0,0.0,
-   -0.724,-0.526, 0.447,  0.0,1.0,0.0,
-   -0.894, 0.000,-0.447,  0.0,1.0,0.0,
-   -0.724,-0.526, 0.447,  0.0,1.0,1.0,
-    0.276,-0.851, 0.447,  0.0,1.0,1.0,
-   -0.276,-0.851,-0.447,  0.0,1.0,1.0,
-    0.276,-0.851, 0.447,  1.0,0.0,0.0,
-    0.894, 0.000, 0.447,  1.0,0.0,0.0,
-    0.724,-0.526,-0.447,  1.0,0.0,0.0,
-    0.276, 0.851, 0.447,  1.0,0.0,1.0,
-   -0.276, 0.851,-0.447,  1.0,0.0,1.0,
-    0.724, 0.526,-0.447,  1.0,0.0,1.0,
-   -0.724, 0.526, 0.447,  1.0,1.0,0.0,
-   -0.894, 0.000,-0.447,  1.0,1.0,0.0,
-   -0.276, 0.851,-0.447,  1.0,1.0,0.0,
-   -0.724,-0.526, 0.447,  0.0,0.0,1.0,
-   -0.276,-0.851,-0.447,  0.0,0.0,1.0,
-   -0.894, 0.000,-0.447,  0.0,0.0,1.0,
-    0.276,-0.851, 0.447,  0.0,1.0,0.0,
-    0.724,-0.526,-0.447,  0.0,1.0,0.0,
-   -0.276,-0.851,-0.447,  0.0,1.0,0.0,
-    0.894, 0.000, 0.447,  0.0,1.0,1.0,
-    0.724, 0.526,-0.447,  0.0,1.0,1.0,
-    0.724,-0.526,-0.447,  0.0,1.0,1.0,
-};
-
-/*
- *  Draw icosahedron using client side arrays
- *     at (x,y,z)
- *     size  s
- *     rotated th about the x axis
- */
-static void icosahedron2(float x,float y,float z,float s,float th)
-{
-   //  Define vertexes
-   glVertexPointer(3,GL_FLOAT,6*sizeof(float),xyzrgb);
-   glEnableClientState(GL_VERTEX_ARRAY);
-   //  Define colors for each vertex
-   //  Draw icosahedron
-   glPushMatrix();
-   glTranslatef(x,y,z);
-   glRotatef(th,1,0,0);
-   glScalef(s,s,s);
-   glDrawArrays(GL_TRIANGLES,0,Ni);
-   glPopMatrix();
-   //  Disable vertex array
-   glDisableClientState(GL_VERTEX_ARRAY);
-   //  Disable color array
-   glDisableClientState(GL_COLOR_ARRAY);
 }
 
 void reshape(GLFWwindow *window, int width, int height)
@@ -164,7 +77,44 @@ void reshape(GLFWwindow *window, int width, int height)
     //  Set the viewport to the entire window
     glViewport(0, 0, width, height);
     //  Set projection
-    Project(mode ? fov : 0, asp, dim, th, ph, mode);
+    Project(mode ? fov : 0, asp, dim);
+}
+
+void init()
+{
+    glGenBuffers(1, &vbo);
+    glGenVertexArrays(1, &vao);
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    float vertices[] =
+        {
+            -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, //top left
+            0.5f, 0.5f, 0.0f, 1.0f, 0.0f,  // top right
+            -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
+
+            0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+            0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
+            -0.5f, -0.5f, 0.0f, 0.0f, 1.0f
+
+        };
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * sizeof(float), (void *)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+}
+
+void render()
+{
+    const static float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    glClearBufferfv(GL_COLOR, 0, black);
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 int main(void)
@@ -174,6 +124,10 @@ int main(void)
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
         exit(EXIT_FAILURE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
 
     if (!window)
@@ -184,18 +138,20 @@ int main(void)
     glfwMakeContextCurrent(window);
     glewInit();
     glfwSwapInterval(1);
+    //  Set callback for window resize
     glfwSetWindowSizeCallback(window, reshape);
+    //  Set initial window size
     int width, height;
-
     glfwGetWindowSize(window, &width, &height);
     reshape(window, width, height);
+    //  Set callback for keyboard input
     glfwSetKeyCallback(window, key);
-    
-    CompileShaders(vertexShader, fragmentShader);
-    
+
+    init();
     while (!glfwWindowShouldClose(window))
     {
-        icosahedron2(0,0,0, 1, 0);
+        CompileShaders(vertexShader, fragmentShader);
+        render();
         glfwSwapBuffers(window);
         glUseProgram(0);
         glfwPollEvents();
