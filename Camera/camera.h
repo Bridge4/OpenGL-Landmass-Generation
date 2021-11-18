@@ -1,6 +1,6 @@
 #ifndef CAMERA_CLASS_H
 #define CAMERA_CLASS_H
-#include "CSCIx229.h"
+#include "../CSCIx229.h"
 //camera class sourced from https://github.com/VictorGordan/opengl-tutorials/tree/main/YoutubeOpenGL%208%20-%20Camera
 
 class Camera

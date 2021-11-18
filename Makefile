@@ -1,5 +1,6 @@
-EXE=final
-
+EXE=main
+CAMERA=./Camera/
+SHADERS=./Shaders/
 # Main target
 all: $(EXE)
 
@@ -24,28 +25,28 @@ CLEAN=rm -f $(EXE) *.o *.a
 endif
 
 # Dependencies
-final.o: final.cpp CSCIx229.h compileshaders.h camera.h
+main.o: main.cpp CSCIx229.h ./Shaders/compileshaders.h ./Camera/camera.h
 
 #  Create archive
-CSCIx229.a:final.o compileshaders.o camera.o
+CSCIx229.a:main.o ./Shaders/compileshaders.o ./Camera/camera.o
 	ar -rcs $@ $^
 
-compileshaders.a: final.o CSCIx229.o camera.o
-# Compile rules
+./Shaders/compileshaders.a: main.o CSCIx229.o camera.o
+# Compile rules./Camera/
 .c.o:
 	gcc -c $(CFLG)  $<
 .cpp.o:
 	g++ -c $(CFLG)  $<
 
 #  Link
-final:final.o CSCIx229.a 
+main:main.o CSCIx229.a 
 	g++ $(CFLG) -o $@ $^  $(LIBS)
 
-compileshaders:compileshaders.o final.o CSCIx229.a camera.a
-	g++ $(CFLG) -o $@ $^  $(LIBS)
+compileshaders:compileshaders.o main.o CSCIx229.a camera.a
+	g++ $(CFLG) -o $@ $^  $(LIBS)./Camera/
 
-camera:compileshaders.o final.o CSCIx229.a camera.a
-	g++ $(CFLG) -o $@ $^  $(LIBS)
+./Camera/camera:compileshaders.o main.o CSCIx229.a camera.a
+	g++ $(CFLG) -o $@ $^  $(LIBS)./Camera/
 #  Clean
 clean:
 	$(CLEAN)
