@@ -1,22 +1,11 @@
 #include "CSCIx229.h"
-#include "./Shaders/compileshaders.h"
-#include "./Camera/camera.h"
+#include "compileshaders.h"
+#include "camera.h"
 // specifying shader file names
-const char *vertexShader = "shader.vs";
-const char *fragmentShader = "shader.fs";
-int th = 0;     //  Azimuth of view angle
-int ph = 0;     //  Elevation of view angle
-int Th = 0;     //  Azimuth of view angle
-int Ph = 0;     //  Elevation of view angle
-int fov = 55;   //  Field of view (for perspective)
-double asp = 1; //  Aspect ratio
-double dim = 3; //  Size of world
-int mode = 0;
+const char *vertexShader = "./Shaders/shader.vs";
+const char *fragmentShader = "./Shaders/shader.fs";
 unsigned int vao;
 unsigned int vbo;
-glm::vec2 rotate;
-glm::mat4 projection;
-float translate;
 GLuint shader;
 //imported noise library WOOOOOOOOO
 float* generateNoise()
