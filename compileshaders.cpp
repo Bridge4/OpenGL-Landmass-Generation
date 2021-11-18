@@ -52,7 +52,7 @@ void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
     glAttachShader(ShaderProgram, ShaderObj);
 }
 
-void CompileShaders(const char* vertexShader, const char* fragmentShader)
+GLuint CompileShaders(const char* vertexShader, const char* fragmentShader)
 {
     GLuint ShaderProgram = glCreateProgram();
 
@@ -94,7 +94,7 @@ void CompileShaders(const char* vertexShader, const char* fragmentShader)
         fprintf(stderr, "Invalid shader program: '%s'\n", ErrorLog);
         exit(1);
     }
-    
 
     glUseProgram(ShaderProgram);
+    return ShaderProgram;
 }

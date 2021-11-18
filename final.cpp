@@ -1,5 +1,6 @@
 #include "CSCIx229.h"
 #include "compileshaders.h"
+#include "camera.h"
 // specifying shader file names
 const char *vertexShader = "shader.vs";
 const char *fragmentShader = "shader.fs";
@@ -13,17 +14,10 @@ double dim = 3; //  Size of world
 int mode = 0;
 unsigned int vao;
 unsigned int vbo;
-
-glm::mat4 camera(float Translate, glm::vec2 const& Rotate)
-{
-	glm::mat4 Projection = glm::perspective(glm::pi<float>() * 0.25f, 4.0f / 3.0f, 0.1f, 100.f);
-	glm::mat4 View = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -Translate));
-	View = glm::rotate(View, Rotate.y, glm::vec3(-1.0f, 0.0f, 0.0f));
-	View = glm::rotate(View, Rotate.x, glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-	return Projection * View * Model;
-}
-
+glm::vec2 rotate;
+glm::mat4 projection;
+float translate;
+GLuint shader;
 //imported noise library WOOOOOOOOO
 float* generateNoise()
 {
@@ -90,14 +84,14 @@ void key(GLFWwindow *window, int key, int scancode, int action, int mods)
         Ph += 5;
     //  Increase/decrease asimuth
     else if (key == GLFW_KEY_RIGHT)
-        th += 5;
+        rotate.x += 1;
     else if (key == GLFW_KEY_LEFT)
-        th -= 5;
+        rotate.x -= 1;
     //  Increase/decrease elevation
     else if (key == GLFW_KEY_UP)
-        ph += 5;
+        rotate.y += 1;
     else if (key == GLFW_KEY_DOWN)
-        ph -= 5;
+        rotate.y -= 1;
     //  PageUp key - increase dim
     else if (key == GLFW_KEY_PAGE_DOWN)
         dim += 0.1;
@@ -147,7 +141,6 @@ void init()
             0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
             0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
             -0.5f, -0.5f, 0.0f, 0.0f, 1.0f
-
         };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -169,11 +162,6 @@ void render()
 
 int main(void)
 {
-    float* noise = generateNoise();
-    for(int i = 0; i < sizeof(noise); i++)
-    {
-        std::cout << noise[i] << std::endl;
-    }
     GLFWwindow *window;
 
     glfwSetErrorCallback(error_callback);
@@ -198,14 +186,15 @@ int main(void)
     //  Set initial window size
     int width, height;
     glfwGetWindowSize(window, &width, &height);
-    reshape(window, width, height);
     //  Set callback for keyboard input
     glfwSetKeyCallback(window, key);
-    
+    Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
     init();
     while (!glfwWindowShouldClose(window))
     {
-        CompileShaders(vertexShader, fragmentShader);
+        shader = CompileShaders(vertexShader, fragmentShader);
+        camera.Inputs(window);
+        camera.Matrix(45.0f, 0.1f, 100.0f, shader, "camMatrix");
         render();
         glfwSwapBuffers(window);
         glUseProgram(0);

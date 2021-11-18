@@ -16,6 +16,9 @@
 #include "./glm/glm/ext/matrix_transform.hpp" // glm::translate, glm::rotate, glm::scale
 #include "./glm/glm/ext/matrix_clip_space.hpp" // glm::perspective
 #include "./glm/glm/ext/scalar_constants.hpp" // glm::pi
+#include"glm/glm/gtc/type_ptr.hpp"
+#include"glm/glm/gtx/rotate_vector.hpp"
+#include"glm/glm/gtx/vector_angle.hpp"
 
 // GLEW _MUST_ be included first
 #ifdef USEGLEW
