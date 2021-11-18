@@ -13,8 +13,58 @@ double dim = 3; //  Size of world
 int mode = 0;
 unsigned int vao;
 unsigned int vbo;
-unsigned int vao1;
-unsigned int vbo1;
+
+glm::mat4 camera(float Translate, glm::vec2 const& Rotate)
+{
+	glm::mat4 Projection = glm::perspective(glm::pi<float>() * 0.25f, 4.0f / 3.0f, 0.1f, 100.f);
+	glm::mat4 View = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -Translate));
+	View = glm::rotate(View, Rotate.y, glm::vec3(-1.0f, 0.0f, 0.0f));
+	View = glm::rotate(View, Rotate.x, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+	return Projection * View * Model;
+}
+
+//imported noise library WOOOOOOOOO
+float* generateNoise()
+{
+    // Create and configure FastNoise object
+    FastNoiseLite noise;
+    noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+
+    // Gather noise data
+    float noiseData[10];
+    int index = 0;
+
+    for (int y = 0; y < 128; y++)
+    {
+        for (int x = 0; x < 128; x++)
+        {
+            noiseData[index++] = noise.GetNoise((float)x, (float)y);
+        }
+    }
+
+    // Do something with this data...
+
+    // Free data later
+    return noiseData;
+}
+
+/* VERTEX LAYER
+    - This is an abstract structure, We first generate a flat mesh using triangles with y-values = 0
+*/
+void vertexLayer()
+{
+    //CODE HERE
+}
+/* BIOME LAYER
+    - Groupings of vertices will be designated as regions, different
+    regions will have different lists of flora/densities of flora as well as color palettes/elevations 
+*/
+void biomeLayer()
+{
+    //CODE HERE
+}
+
 void key(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     //  Discard key releases (keeps PRESS and REPEAT)
@@ -119,6 +169,11 @@ void render()
 
 int main(void)
 {
+    float* noise = generateNoise();
+    for(int i = 0; i < sizeof(noise); i++)
+    {
+        std::cout << noise[i] << std::endl;
+    }
     GLFWwindow *window;
 
     glfwSetErrorCallback(error_callback);
@@ -146,7 +201,7 @@ int main(void)
     reshape(window, width, height);
     //  Set callback for keyboard input
     glfwSetKeyCallback(window, key);
-
+    
     init();
     while (!glfwWindowShouldClose(window))
     {
@@ -156,4 +211,5 @@ int main(void)
         glUseProgram(0);
         glfwPollEvents();
     }
+    
 }
