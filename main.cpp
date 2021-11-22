@@ -1,6 +1,7 @@
 #include "CSCIx229.h"
 #include "compileshaders.h"
 #include "camera.h"
+
 // specifying shader file names
 const char *vertexShader = "./Shaders/shader.vs";
 const char *fragmentShader = "./Shaders/shader.fs";
@@ -32,12 +33,21 @@ float* generateNoise()
     return noiseData;
 }
 
+void renderMesh(int height, int width, float elevation)
+{
+    //generate mesh
+
+}
 /* VERTEX LAYER
     - This is an abstract structure, We first generate a flat mesh using triangles with y-values = 0
 */
 void vertexLayer()
 {
     //CODE HERE
+
+    //generate height map
+
+    //render the mesh
 }
 /* BIOME LAYER
     - Groupings of vertices will be designated as regions, different
@@ -118,8 +128,8 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         shader = CompileShaders(vertexShader, fragmentShader);
-        camera.Inputs(window);
         camera.Matrix(45.0f, 0.1f, 100.0f, shader, "camMatrix");
+        camera.Inputs(window);
         render();
         glfwSwapBuffers(window);
         glUseProgram(0);
