@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string.h>
 #include <iostream>
+#include <vector>
 #include "./FastNoiseLite/Cpp/FastNoiseLite.h"
 #include "./glm/glm/vec3.hpp"// glm::vec3
 #include "./glm/glm/vec4.hpp" // glm::vec4

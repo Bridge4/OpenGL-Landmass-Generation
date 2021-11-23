@@ -7,9 +7,10 @@ const char *vertexShader = "./Shaders/shader.vs";
 const char *fragmentShader = "./Shaders/shader.fs";
 unsigned int vao;
 unsigned int vbo;
+unsigned int ibo;
 GLuint shader;
 //imported noise library WOOOOOOOOO
-float* generateNoise()
+float *generateNoise()
 {
     // Create and configure FastNoise object
     FastNoiseLite noise;
@@ -33,10 +34,58 @@ float* generateNoise()
     return noiseData;
 }
 
-void renderMesh(int height, int width, float elevation)
+void mesh(int height, int width)
 {
-    //generate mesh
+    //generate mesh data
+    //stride is determined by the width of the mesh
+    //every WIDTH in array is a NEW ROW
+    //BUILDING FROM BOTTOM ROW UPWARDS!
+    std::vector<float> coord;
+    int row = 0;
+    while (row != height)
+    {
+        for (float i = 0.0f; i < width; i++)
+        {
+            coord.push_back(i);
+            //ELEVATION IS TEMPORARILY 0 SO AS TO CREATE FLAT MESH
+            coord.push_back(0);
+            coord.push_back(row);
+        }
+        row++;
+    }
+    
+    for (int i = 0; i < coord.size(); i++)
+    {
+        std::cout << coord[i] << std::endl;
+    }
 
+    float vertices[] =
+        {
+            -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, //0
+            0.5f, -0.5f, 1.0f, 0.5f, 1.0f,  //1
+            0.5f, 0.5f, 1.0f, 1.0f, 1.0f,   //2
+            -0.5f, 0.5f, 0.5f, 1.0f, 1.0f   //3
+        };
+    unsigned int indices[] =
+        {
+            0, 1, 2, //triangle 1
+            2, 3, 0  //triangle 2
+        };
+    //VBO
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    //VAO
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * sizeof(float), (void *)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    //IBO
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 /* VERTEX LAYER
     - This is an abstract structure, We first generate a flat mesh using triangles with y-values = 0
@@ -65,30 +114,10 @@ static void error_callback(int error, const char *description)
 
 void init()
 {
-    glGenBuffers(1, &vbo);
-    glGenVertexArrays(1, &vao);
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-    float vertices[] =
-        {
-            -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, //top left
-            0.5f, 0.5f, 0.0f, 1.0f, 0.0f,  // top right
-            -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
-
-            0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-            0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
-            -0.5f, -0.5f, 0.0f, 0.0f, 1.0f
-        };
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * sizeof(float), (void *)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    int height, width;
+    height = 2;
+    width = 5;
+    mesh(height, width);
 }
 
 void render()
@@ -96,7 +125,8 @@ void render()
     const static float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glClearBufferfv(GL_COLOR, 0, black);
     glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 int main(void)
@@ -135,5 +165,4 @@ int main(void)
         glUseProgram(0);
         glfwPollEvents();
     }
-    
 }
