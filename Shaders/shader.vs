@@ -16,6 +16,8 @@ void main()
 {
 	// Outputs the positions/coordinates of all vertices
 	gl_Position = camMatrix * vec4(aPos, 1.0);
-	// Assigns the colors from the Vertex Data to "color"
-	color = aColor;
+	if(mod(aPos.x, 2) == 0)
+		color = vec3(1.0,0.0,0.0);
+	else
+		color = vec3(0.0,1.0,0.0);
 }

@@ -1,132 +1,113 @@
 #include "CSCIx229.h"
 #include "compileshaders.h"
 #include "camera.h"
-
+#include "mesh.h"
 // specifying shader file names
 const char *vertexShader = "./Shaders/shader.vs";
 const char *fragmentShader = "./Shaders/shader.fs";
 unsigned int vao;
 unsigned int vbo;
 unsigned int ibo;
+int mHeight = 100;
+int mWidth = 100;
 GLuint shader;
 //imported noise library WOOOOOOOOO
-float *generateNoise()
+Mesh makeMesh(int mHeight, int mWidth)
 {
-    // Create and configure FastNoise object
     FastNoiseLite noise;
     noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-
-    // Gather noise data
-    float noiseData[10];
-    int index = 0;
-
-    for (int y = 0; y < 128; y++)
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    std::vector<float> v;
+    //construct vertex positions for mesh
+    float row = 0;
+    while (row < mHeight)
     {
-        for (int x = 0; x < 128; x++)
+        for (float i = 0.0f; i < mWidth; i++)
         {
-            noiseData[index++] = noise.GetNoise((float)x, (float)y);
-        }
-    }
-
-    // Do something with this data...
-
-    // Free data later
-    return noiseData;
-}
-
-void mesh(int height, int width)
-{
-    //generate mesh data
-    //stride is determined by the width of the mesh
-    //every WIDTH in array is a NEW ROW
-    //BUILDING FROM BOTTOM ROW UPWARDS!
-    std::vector<float> coord;
-    int row = 0;
-    while (row != height)
-    {
-        for (float i = 0.0f; i < width; i++)
-        {
-            coord.push_back(i);
-            //ELEVATION IS TEMPORARILY 0 SO AS TO CREATE FLAT MESH
-            coord.push_back(0);
-            coord.push_back(row);
+            Vertex vertex;
+            vertex.Position = glm::vec3(i, row, 100*noise.GetNoise((float)i, (float)row));
+            if((int(i) % 2 == 0))
+                vertex.Color = glm::vec3(1.0f, 0.0f, 0.0f);
+            else    
+                vertex.Color = glm::vec3(0.0f, 1.0f, 0.0f);
+            vertices.push_back(vertex);
         }
         row++;
     }
-    
-    for (int i = 0; i < coord.size(); i++)
+    //DRAW ORDER OF TRIANGLES
+    //right facing triangle draw order
+    unsigned int r1, r2, r3;
+    r1 = mWidth;
+    r2 = 0;
+    r3 = 1;
+    //left facing triangle draw order
+    unsigned int l1, l2, l3;
+    l1 = mWidth+1;
+    l2 = mWidth;
+    l3 = 1;
+    //total drawn in current row
+    int inRowRight = 0;
+    int inRowLeft = 0;
+    //total drawn overall
+    int drawnRight = 0;
+    int drawnLeft = 0;
+    //limit of triangles to draw
+    int limit = (mWidth-1)*(mHeight-1);
+    for (int i = 0; i < vertices.size(); i += 1)
     {
-        std::cout << coord[i] << std::endl;
+        if (drawnRight == limit)
+            break;
+        indices.push_back(r1);
+        indices.push_back(r2);
+        indices.push_back(r3);
+        inRowRight++;
+        drawnRight++;
+        if (inRowRight == mWidth - 1)
+        {
+            r1 += 2;
+            r2 += 2;
+            r3 += 2;
+            inRowRight = 0;
+        }
+        else
+        {
+            r1++;
+            r2++;
+            r3++;
+        }
+    }
+    for (int i = 0; i < vertices.size(); i += 1)
+    {
+        if (drawnLeft == limit)
+            break;
+        indices.push_back(l1);
+        indices.push_back(l2);
+        indices.push_back(l3);
+        inRowLeft++;
+        drawnLeft++;
+        if (inRowLeft == mWidth-1)
+        {
+            l1 += 2;
+            l2 += 2;
+            l3 += 2;
+            inRowLeft = 0;
+        }
+        else
+        {
+            l1++;
+            l2++;
+            l3++;
+        }
     }
 
-    float vertices[] =
-        {
-            -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, //0
-            0.5f, -0.5f, 1.0f, 0.5f, 1.0f,  //1
-            0.5f, 0.5f, 1.0f, 1.0f, 1.0f,   //2
-            -0.5f, 0.5f, 0.5f, 1.0f, 1.0f   //3
-        };
-    unsigned int indices[] =
-        {
-            0, 1, 2, //triangle 1
-            2, 3, 0  //triangle 2
-        };
-    //VBO
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    //VAO
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * sizeof(float), (void *)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    //IBO
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-}
-/* VERTEX LAYER
-    - This is an abstract structure, We first generate a flat mesh using triangles with y-values = 0
-*/
-void vertexLayer()
-{
-    //CODE HERE
-
-    //generate height map
-
-    //render the mesh
-}
-/* BIOME LAYER
-    - Groupings of vertices will be designated as regions, different
-    regions will have different lists of flora/densities of flora as well as color palettes/elevations 
-*/
-void biomeLayer()
-{
-    //CODE HERE
+    Mesh mesh(vertices, indices);
+    return mesh;
 }
 
 static void error_callback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
-}
-
-void init()
-{
-    int height, width;
-    height = 2;
-    width = 5;
-    mesh(height, width);
-}
-
-void render()
-{
-    const static float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glClearBufferfv(GL_COLOR, 0, black);
-    glBindVertexArray(vao);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 int main(void)
@@ -140,6 +121,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_DEPTH_BITS, GL_TRUE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
 
     if (!window)
@@ -152,17 +134,21 @@ int main(void)
     glfwSwapInterval(1);
     int width, height;
     glfwGetWindowSize(window, &width, &height);
+    glEnable(GL_DEPTH_TEST);  
+    //generateNoise(mHeight, mWidth);
     //  Set callback for keyboard input
     Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
-    init();
+    Mesh Mesh = makeMesh(mHeight, mWidth);
+    shader = CompileShaders(vertexShader, fragmentShader);
     while (!glfwWindowShouldClose(window))
     {
-        shader = CompileShaders(vertexShader, fragmentShader);
-        camera.Matrix(45.0f, 0.1f, 100.0f, shader, "camMatrix");
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        camera.Matrix(90.0f, 0.1f, 1000.0f, shader, "camMatrix");
         camera.Inputs(window);
-        render();
+        Mesh.Draw();
+        glUseProgram(shader);
         glfwSwapBuffers(window);
-        glUseProgram(0);
         glfwPollEvents();
     }
+    glUseProgram(0);
 }

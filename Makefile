@@ -24,16 +24,18 @@ CLEAN=rm -f $(EXE) *.o *.a
 endif
 
 # Dependencies
-main.o: main.cpp CSCIx229.h compileshaders.h camera.h
+main.o: main.cpp CSCIx229.h compileshaders.h camera.h mesh.h
 
 #  Create archive
-CSCIx229.a:main.o compileshaders.o camera.o
+CSCIx229.a:main.o compileshaders.o camera.o mesh.o
 	ar -rcs $@ $^
 
-compileshaders.a: main.o CSCIx229.o camera.o
+compileshaders.a: main.o CSCIx229.o camera.o mesh. o
 	
+mesh.a: main.o CSCIx229.o camera.o compileshaders.o
 
-camera.a: main.o CSCIx229.o compileshaders.o
+camera.a: main.o CSCIx229.o compileshaders.o mesh.o
+
 # Compile rules
 .c.o:
 	gcc -c $(CFLG)  $<
@@ -44,10 +46,11 @@ camera.a: main.o CSCIx229.o compileshaders.o
 main:main.o CSCIx229.a 
 	g++ $(CFLG) -o $@ $^  $(LIBS)
 
-compileshaders:compileshaders.o main.o CSCIx229.a camera.a
+compileshaders:compileshaders.o main.o CSCIx229.a camera.a mesh.a
 	g++ $(CFLG) -o $@ $^  $(LIBS)
-
-camera:compileshaders.o main.o CSCIx229.a camera.a
+mesh:compileshaders.o main.o CSCIx229.a camera.a mesh.a
+	g++ $(CFLG) -o $@ $^  $(LIBS)
+camera:compileshaders.o main.o CSCIx229.a camera.a mesh.a
 	g++ $(CFLG) -o $@ $^  $(LIBS)
 #  Clean
 clean:

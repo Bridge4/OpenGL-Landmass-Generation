@@ -94,7 +94,5 @@ GLuint CompileShaders(const char* vertexShader, const char* fragmentShader)
         fprintf(stderr, "Invalid shader program: '%s'\n", ErrorLog);
         exit(1);
     }
-
-    glUseProgram(ShaderProgram);
     return ShaderProgram;
 }

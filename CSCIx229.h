@@ -9,6 +9,8 @@
 #include <fstream>
 #include <string.h>
 #include <iostream>
+#include <map>
+#include <tuple>
 #include <vector>
 #include "./FastNoiseLite/Cpp/FastNoiseLite.h"
 #include "./glm/glm/vec3.hpp"// glm::vec3
