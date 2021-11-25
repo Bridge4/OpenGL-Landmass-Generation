@@ -16,8 +16,20 @@ void main()
 {
 	// Outputs the positions/coordinates of all vertices
 	gl_Position = camMatrix * vec4(aPos, 1.0);
-	if(mod(aPos.x, 2) == 0)
-		color = vec3(1.0,0.0,0.0);
+	if(aPos.z < 0)
+	{
+		color = vec3(0.133,0.18,0.314);
+	}
+	else if(aPos.z > 25)
+	{
+		color = vec3(0.91,0.882,0.937);
+	}
+	else if(aPos.z < 5 && aPos.z > 0)
+	{
+		color = vec3(0.922,0.988,0.984);
+	}
 	else
-		color = vec3(0.0,1.0,0.0);
+	{
+		color = vec3(0.286,0.627,0.471);
+	}
 }

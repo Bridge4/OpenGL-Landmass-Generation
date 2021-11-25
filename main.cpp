@@ -8,8 +8,8 @@ const char *fragmentShader = "./Shaders/shader.fs";
 unsigned int vao;
 unsigned int vbo;
 unsigned int ibo;
-int mHeight = 100;
-int mWidth = 100;
+int mHeight = 1000;
+int mWidth = 1000;
 GLuint shader;
 //imported noise library WOOOOOOOOO
 Mesh makeMesh(int mHeight, int mWidth)
@@ -26,12 +26,14 @@ Mesh makeMesh(int mHeight, int mWidth)
         for (float i = 0.0f; i < mWidth; i++)
         {
             Vertex vertex;
-            vertex.Position = glm::vec3(i, row, 100*noise.GetNoise((float)i, (float)row));
+            float elevation = 100*noise.GetNoise((float)i, (float)row);
+            vertex.Position = glm::vec3(i, row, elevation);
             if((int(i) % 2 == 0))
                 vertex.Color = glm::vec3(1.0f, 0.0f, 0.0f);
             else    
                 vertex.Color = glm::vec3(0.0f, 1.0f, 0.0f);
             vertices.push_back(vertex);
+            std::cout << elevation << std::endl;
         }
         row++;
     }
