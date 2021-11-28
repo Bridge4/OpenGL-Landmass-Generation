@@ -10,14 +10,13 @@ const char *lightF = "./Shaders/light.fs";
 unsigned int vao;
 unsigned int vbo;
 unsigned int ibo;
-int worldHeight = 50;
-int worldWidth = 50;
+int worldHeight = 100;
+int worldWidth = 100;
 int normCountLimit = worldHeight * worldWidth;
 int normCount = 0;
 int biome = 2;
 bool changeBiome = false;
 GLuint shader, light;
-
 static void error_callback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -34,6 +33,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
     
 }
+
 glm::vec3 setColor(float pos, int biome)
 {
     glm::vec3 shorelineColor;
@@ -101,7 +101,6 @@ glm::vec3 setColor(float pos, int biome)
         return groundColor;
 }
 
-//helper function to calculate surface normal for flat shading of triangle/polygon
 void setNormal(std::vector<Vertex> vertices,
                unsigned int v1, unsigned int v2, unsigned int v3)
 {
@@ -317,8 +316,8 @@ Mesh genSkyBox(int worldHeight, int worldWidth)
     }
     unsigned int skyIndices[] =
         {
-            0, 1, 2,
-            0, 2, 3,
+            2, 1, 0,
+            3, 2, 0,
 
             0, 7, 3,
             0, 4, 7,
@@ -333,7 +332,8 @@ Mesh genSkyBox(int worldHeight, int worldWidth)
             1, 5, 4,
 
             4, 6, 7,
-            4, 5, 6};
+            4, 5, 6
+            };
     for (int i = 0; i < 36; i++)
     {
         indices.push_back(skyIndices[i]);
@@ -388,7 +388,6 @@ Mesh genLightSource()
     return Mesh(vertices, indices);
 }
 
-
 GLFWwindow *startGLFW()
 {
     GLFWwindow *window;
@@ -413,7 +412,7 @@ GLFWwindow *startGLFW()
     glewInit();
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     return window;
 }
 
