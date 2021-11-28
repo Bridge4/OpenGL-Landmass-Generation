@@ -10,7 +10,7 @@ layout (location = 2) in vec3 aNormal;
 // Outputs the color for the Fragment Shader
 out vec3 color;
 // Outputs the normal for the Fragment Shader
-flat out vec3 Normal;
+out vec3 Normal;
 // Outputs the current position for the Fragment Shader
 out vec3 crntPos;
 

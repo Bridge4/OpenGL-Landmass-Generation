@@ -14,91 +14,56 @@ int worldHeight = 100;
 int worldWidth = 100;
 int normCountLimit = worldHeight * worldWidth;
 int normCount = 0;
-int biome = 2;
 bool changeBiome = false;
+int biome = 1;
+int changeSeed = false;
+int seed = 1337;
+float lightX = worldWidth;
+float lightY = 20.0f;
+float lightZ = worldHeight;
 GLuint shader, light;
+
 static void error_callback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
     {
         changeBiome = true;
-        if(biome == 3)
+        if (biome == 2)
             biome = 1;
         else
             biome++;
     }
-    
-}
-
-glm::vec3 setColor(float pos, int biome)
-{
-    glm::vec3 shorelineColor;
-    glm::vec3 rockColor1;
-    glm::vec3 rockColor2;
-    glm::vec3 peakColor;
-    glm::vec3 waterColor1;
-    glm::vec3 waterColor2;
-    glm::vec3 waterColor3;
-    glm::vec3 groundColor;
-
-    switch (biome)
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
     {
-    case 1:
-        shorelineColor = glm::vec3(0.922, 0.988, 0.984);
-        rockColor1 = glm::vec3(0.922, 0.988, 0.984);
-        rockColor2 = glm::vec3(0.612, 0.584, 0.514);
-        peakColor = glm::vec3(0.937, 0.851, 0.808);
-        waterColor1 = glm::vec3(0.0, 0.651, 0.984);
-        waterColor2 = glm::vec3(0.02, 0.51, 0.792);
-        waterColor3 = glm::vec3(0., 0.392, 0.58);
-        groundColor = glm::vec3(0.255, 0.616, 0.471);
-        break;
-    case 2:
-        shorelineColor = glm::vec3(0.922, 0.988, 0.984);
-        rockColor1 = glm::vec3(0.427,0.31,0.431);
-        rockColor2 = glm::vec3(0.612, 0.584, 0.514);
-        peakColor = glm::vec3(0.937, 0.851, 0.808);
-        waterColor1 = glm::vec3(0.706,0.059,0.729);
-        waterColor2 = glm::vec3(0.02, 0.51, 0.792);
-        waterColor3 = glm::vec3(0., 0.392, 0.58);
-        groundColor = glm::vec3(0.922, 0.788, 0.984);
-        break;
-    case 3:
-        shorelineColor = glm::vec3(0.922, 0.988, 0.984);
-        rockColor1 = glm::vec3(0.922, 0.988, 0.984);
-        rockColor2 = glm::vec3(0.612, 0.584, 0.514);
-        peakColor = glm::vec3(0.937, 0.851, 0.808);
-        waterColor1 = glm::vec3(0.0, 0.651, 0.984);
-        waterColor2 = glm::vec3(0.02, 0.51, 0.792);
-        waterColor3 = glm::vec3(0., 0.392, 0.58);
-        groundColor = glm::vec3(0.255, 0.616, 0.471);
-        break;
+        changeSeed = true;
+        seed = rand() % 2000;
     }
-    //Shoreline color
-    if (pos < 5 && pos > 0)
-        return shorelineColor;
-    //Rock colors
-    else if (pos < 10 && pos > 5)
-        return rockColor1;
-    else if (pos < 15 && pos > 10)
-        return rockColor2;
-    //Peak colors
-    else if (pos > 20)
-        return peakColor;
-    //Water Colors
-    else if (pos > -5 && pos <0)
-        return waterColor1;
-    else if (pos < -5 && pos > -10)
-        return waterColor2;
-    else if (pos < -10)
-        return waterColor3;
-    //Ground Color
-    else
-        return groundColor;
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+    {
+        lightX--;
+    }
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+    {
+        lightX++;
+    }
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+    {
+        lightZ++;
+    }
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+    {
+        lightZ--;
+    }
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+    {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            lightY--;
+        lightY++;
+    }
 }
 
 void setNormal(std::vector<Vertex> vertices,
@@ -127,6 +92,63 @@ void setNormal(std::vector<Vertex> vertices,
     vertices[v1].Normal = normal;
     vertices[v2].Normal = normal;
     vertices[v3].Normal = normal;
+}
+
+glm::vec3 setColor(float pos, int biome)
+{
+    glm::vec3 shorelineColor;
+    glm::vec3 rockColor1;
+    glm::vec3 rockColor2;
+    glm::vec3 peakColor;
+    glm::vec3 waterColor1;
+    glm::vec3 waterColor2;
+    glm::vec3 waterColor3;
+    glm::vec3 groundColor;
+
+    switch (biome)
+    {
+    case 1:
+        shorelineColor = glm::vec3(0.922, 0.988, 0.984);
+        rockColor1 = glm::vec3(0.922, 0.988, 0.984);
+        rockColor2 = glm::vec3(0.612, 0.584, 0.514);
+        peakColor = glm::vec3(0.937, 0.851, 0.808);
+        waterColor1 = glm::vec3(0.0, 0.651, 0.984);
+        waterColor2 = glm::vec3(0.02, 0.51, 0.792);
+        waterColor3 = glm::vec3(0., 0.392, 0.58);
+        groundColor = glm::vec3(0.255, 0.616, 0.471);
+        break;
+    case 2:
+        shorelineColor = glm::vec3(0.922, 0.988, 0.984);
+        rockColor1 = glm::vec3(0.427, 0.31, 0.431);
+        rockColor2 = glm::vec3(0.612, 0.584, 0.514);
+        peakColor = glm::vec3(0.831, 0.816, 0.839);
+        waterColor1 = glm::vec3(0.706, 0.059, 0.729);
+        waterColor2 = glm::vec3(0.02, 0.51, 0.792);
+        waterColor3 = glm::vec3(0., 0.392, 0.58);
+        groundColor = glm::vec3(0.922, 0.788, 0.984);
+        break;
+    }
+    //Shoreline color
+    if (pos < 5 && pos > 0)
+        return shorelineColor;
+    //Rock colors
+    else if (pos < 10 && pos > 5)
+        return rockColor1;
+    else if (pos < 15 && pos > 10)
+        return rockColor2;
+    //Peak colors
+    else if (pos > 20)
+        return peakColor;
+    //Water Colors
+    else if (pos > -5 && pos < 0)
+        return waterColor1;
+    else if (pos < -5 && pos > -10)
+        return waterColor2;
+    else if (pos < -10)
+        return waterColor3;
+    //Ground Color
+    else
+        return groundColor;
 }
 
 Mesh Tree(int biome)
@@ -191,9 +213,10 @@ Mesh Tree(int biome)
     return Mesh(vertices, indices);
 }
 
-Mesh genWorld(int worldHeight, int worldWidth, int biome)
+Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed)
 {
     FastNoiseLite noise;
+    noise.SetSeed(seed);
     noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
     noise.SetFrequency(0.01f);
     noise.SetFractalLacunarity(2.0f);
@@ -332,8 +355,7 @@ Mesh genSkyBox(int worldHeight, int worldWidth)
             1, 5, 4,
 
             4, 6, 7,
-            4, 5, 6
-            };
+            4, 5, 6};
     for (int i = 0; i < 36; i++)
     {
         indices.push_back(skyIndices[i]);
@@ -347,14 +369,14 @@ Mesh genLightSource()
     std::vector<unsigned int> indices;
     std::vector<glm::vec3> locations;
     //this is not pretty I KNOW
-    locations.push_back(glm::vec3(-10, -10, 10));
-    locations.push_back(glm::vec3(-10, -10, -10));
-    locations.push_back(glm::vec3(10, -10, -10));
-    locations.push_back(glm::vec3(10, -10, 10));
-    locations.push_back(glm::vec3(-10, 10, 10));
-    locations.push_back(glm::vec3(-10, 10, -10));
-    locations.push_back(glm::vec3(10, 10, -10));
-    locations.push_back(glm::vec3(10, 10, 10));
+    locations.push_back(glm::vec3(-1, -1, 1));
+    locations.push_back(glm::vec3(-1, -1, -1));
+    locations.push_back(glm::vec3(1, -1, -1));
+    locations.push_back(glm::vec3(1, -1, 1));
+    locations.push_back(glm::vec3(-1, 1, 1));
+    locations.push_back(glm::vec3(-1, 1, -1));
+    locations.push_back(glm::vec3(1, 1, -1));
+    locations.push_back(glm::vec3(1, 1, 1));
     for (int i = 0; i < locations.size(); i++)
     {
         Vertex vertex;
@@ -366,21 +388,20 @@ Mesh genLightSource()
             0, 1, 2,
             0, 2, 3,
 
-            0, 7, 3,
-            0, 4, 7,
+            3, 7, 0,
+            7, 4, 0,
 
-            3, 6, 2,
-            3, 7, 6,
+            2, 6, 3,
+            6, 7, 3,
 
-            2, 5, 1,
-            2, 6, 5,
+            1, 5, 2,
+            5, 6, 2,
 
-            1, 4, 0,
-            1, 5, 4,
+            0, 4, 1,
+            4, 5, 1,
 
-            4, 6, 7,
-            4, 5, 6
-        };
+            7, 6, 4,
+            6, 5, 4};
     for (int i = 0; i < 36; i++)
     {
         indices.push_back(lightIndices[i]);
@@ -425,11 +446,11 @@ int main(void)
     //CAMERA
     Camera camera(width, height, glm::vec3(0.0f, 0.0f, 1.0f));
 
-    //WORLD GENERATION
-    Mesh world = genWorld(worldHeight, worldWidth, biome);
-
     //SKYBOX GENERATION
     Mesh skyBox = genSkyBox(worldHeight, worldWidth);
+
+    //WORLD GENERATION
+    Mesh world = genWorld(worldHeight, worldWidth, biome, seed);
 
     //LIGHT SOURCE GENERATION
     Mesh lightSource = genLightSource();
@@ -438,33 +459,37 @@ int main(void)
     shader = CompileShaders(vertexShader, fragmentShader);
     light = CompileShaders(lightV, lightF);
 
-    //LIGHTING
-    glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    glm::vec3 lightPos = glm::vec3(worldWidth, 100.0f, worldHeight);
-    glm::mat4 lightModel = glm::mat4(1.0f);
-    lightModel = glm::translate(lightModel, lightPos);
-
-    glm::vec3 worldPos = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::mat4 worldModel = glm::mat4(1.0f);
-    worldModel = glm::translate(worldModel, worldPos);
-    glUseProgram(light);
-    glUniformMatrix4fv(glGetUniformLocation(light, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
-    glUniform4f(glGetUniformLocation(light, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-    glUseProgram(shader);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(worldModel));
-    glUniform4f(glGetUniformLocation(shader, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-    glUniform3f(glGetUniformLocation(shader, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //LIGHTING
+        glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
+        glm::mat4 lightModel = glm::mat4(1.0f);
+        lightModel = glm::translate(lightModel, lightPos);
+
+        glm::vec3 worldPos = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::mat4 worldModel = glm::mat4(1.0f);
+        worldModel = glm::translate(worldModel, worldPos);
+        glUseProgram(light);
+        glUniformMatrix4fv(glGetUniformLocation(light, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
+        glUniform4f(glGetUniformLocation(light, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+        glUseProgram(shader);
+        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(worldModel));
+        glUniform4f(glGetUniformLocation(shader, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
         camera.updateMatrix(90.0f, 0.1f, 10000.0f);
         glUseProgram(shader);
+
         camera.Matrix(shader, "camMatrix");
         if (changeBiome)
         {
-            world = genWorld(worldHeight, worldWidth, biome);   
+            world = genWorld(worldHeight, worldWidth, biome, seed);
             changeBiome = false;
+        }
+        if (changeSeed)
+        {
+            world = genWorld(worldHeight, worldWidth, biome, seed);
+            changeSeed = false;
         }
         world.Draw();
         // Exports the camera Position to the Fragment Shader for specular lighting
