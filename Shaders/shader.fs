@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 #version 330 core
 // Imports the color from the Vertex Shader
 in vec3 color;
@@ -35,3 +36,12 @@ void main()
 	// outputs final color
 	FragColor = lightColor * vec4(color, 1.0) * (diffuse+ambient+spec);
 }
+=======
+#version 330 core
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(0.922,0.482,0.753, 1.0);
+} 
+>>>>>>> Stashed changes
