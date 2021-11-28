@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 #version 330 core
 // Imports the color from the Vertex Shader
 in vec3 color;
@@ -24,7 +23,7 @@ void main()
 	// diffuse lighting
 	vec3 normal = normalize(Normal);
 	vec3 lightDirection = normalize(lightPos - crntPos);
-	float diffuse = max(dot(normal, lightDirection), 1.0f);
+	float diffuse = max(dot(normal, lightDirection), 0.3f);
 
 	// specular lighting
 	float specularLight = 0.50f;
@@ -32,16 +31,7 @@ void main()
     vec3 halfwayDir = normalize(lightDirection + viewDirection);
 	vec3 reflectionDirection = reflect(-lightDirection, normal);
 	float spec = pow(max(dot(normal, halfwayDir), 0.0), 8.0);
-
+	float specular = spec * specularLight;
 	// outputs final color
-	FragColor = lightColor * vec4(color, 1.0) * (diffuse+ambient+spec);
+	FragColor = lightColor * vec4(color, 1.0) * (diffuse+ambient);
 }
-=======
-#version 330 core
-out vec4 FragColor;
-
-void main()
-{
-    FragColor = vec4(0.922,0.482,0.753, 1.0);
-} 
->>>>>>> Stashed changes

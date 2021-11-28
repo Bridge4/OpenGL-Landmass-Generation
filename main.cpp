@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 #include "CSCIx229.h"
 #include "compileshaders.h"
 #include "camera.h"
@@ -11,8 +10,8 @@ const char *lightF = "./Shaders/light.fs";
 unsigned int vao;
 unsigned int vbo;
 unsigned int ibo;
-int worldHeight = 100;
-int worldWidth = 100;
+int worldHeight = 200;
+int worldWidth = 200;
 int normCountLimit = worldHeight * worldWidth;
 int normCount = 0;
 bool changeBiome = false;
@@ -22,6 +21,11 @@ int seed = 1337;
 float lightX = worldWidth;
 float lightY = 20.0f;
 float lightZ = worldHeight;
+float frequency = 0.01f;
+float lacunarity = 2.0f;
+float gain = 0.6f;
+int octaves = 16;
+bool changeTerrain = false;
 GLuint shader, light;
 
 static void error_callback(int error, const char *description)
@@ -64,6 +68,40 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
             lightY--;
         lightY++;
+    }
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+    {
+        changeTerrain = true;
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            frequency-=0.001;
+        else
+            frequency+=0.001;
+    }
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+    {
+        changeTerrain = true;
+
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            lacunarity-=0.01;
+        else
+            lacunarity+=0.01;
+    }
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+    {
+        changeTerrain = true;
+
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            gain-=0.01;
+        else
+            gain+=0.01;
+    }
+    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+    {
+        changeTerrain = true;
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            octaves--;
+        else
+            octaves++;
     }
 }
 
@@ -214,15 +252,26 @@ Mesh Tree(int biome)
     return Mesh(vertices, indices);
 }
 
-Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed)
+glm::vec3 setNormal1(float x, float y, float z)
+{
+    float normX, normY, normZ;
+    normX = (x * z) - (z * y);
+    normY = (z * x) - (x * z);
+    normZ = (x * y) - (y * x);
+    glm::vec3 normal = glm::vec3(normX, normY, normZ);
+    return normal;
+}
+
+Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
+              float frequency, float lacunarity, float gain, int octaves)
 {
     FastNoiseLite noise;
     noise.SetSeed(seed);
     noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-    noise.SetFrequency(0.01f);
-    noise.SetFractalLacunarity(2.0f);
-    noise.SetFractalGain(0.6f);
-    noise.SetFractalOctaves(16);
+    noise.SetFrequency(frequency);
+    noise.SetFractalLacunarity(lacunarity);
+    noise.SetFractalGain(gain);
+    noise.SetFractalOctaves(octaves);
     // this setting
     noise.SetFractalType(FastNoiseLite::FractalType_FBm);
     std::vector<Vertex> vertices;
@@ -239,6 +288,7 @@ Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed)
             float y = 100 * elevation;
             vertex.Color = setColor(y, biome);
             vertex.Position = glm::vec3(i, y, row);
+            vertex.Normal = setNormal1(i, y, row);
             vertices.push_back(vertex);
         }
         row++;
@@ -274,10 +324,10 @@ Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed)
         indices.push_back(l2);
         indices.push_back(l1);
         //flat shading for low poly look
-        setNormal(vertices, r3, r2, r1);
-        setNormal(vertices, l3, l2, l1);
+        //setNormal(vertices, r3, r2, r1);
+        //setNormal(vertices, l3, l2, l1);
         normCount++;
-        std::cout << normCount << "/" << vertices.size() << std::endl;
+        //std::cout << normCount << "/" << vertices.size() << std::endl;
         inRowLeft++;
         drawnLeft++;
         inRowRight++;
@@ -410,7 +460,7 @@ Mesh genLightSource()
     return Mesh(vertices, indices);
 }
 
-GLFWwindow *startGLFW()
+int main(void)
 {
     GLFWwindow *window;
 
@@ -419,10 +469,10 @@ GLFWwindow *startGLFW()
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_DEPTH_BITS, GL_TRUE);
-    window = glfwCreateWindow(1000, 1000, "Terrain Generator", NULL, NULL);
+    window = glfwCreateWindow(1920, 1080, "Terrain Generator", NULL, NULL);
 
     if (!window)
     {
@@ -435,12 +485,6 @@ GLFWwindow *startGLFW()
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    return window;
-}
-
-int main(void)
-{
-    GLFWwindow *window = startGLFW();
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
@@ -451,7 +495,8 @@ int main(void)
     Mesh skyBox = genSkyBox(worldHeight, worldWidth);
 
     //WORLD GENERATION
-    Mesh world = genWorld(worldHeight, worldWidth, biome, seed);
+    Mesh world = genWorld(worldHeight, worldWidth, biome, seed,
+                          0.01f, 2.0f, 0.6f, 16);
 
     //LIGHT SOURCE GENERATION
     Mesh lightSource = genLightSource();
@@ -484,13 +529,18 @@ int main(void)
         camera.Matrix(shader, "camMatrix");
         if (changeBiome)
         {
-            world = genWorld(worldHeight, worldWidth, biome, seed);
+            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves);
             changeBiome = false;
         }
         if (changeSeed)
         {
-            world = genWorld(worldHeight, worldWidth, biome, seed);
+            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves);
             changeSeed = false;
+        }
+        if (changeTerrain)
+        {
+            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves);
+            changeTerrain = false;
         }
         world.Draw();
         // Exports the camera Position to the Fragment Shader for specular lighting
@@ -505,134 +555,4 @@ int main(void)
         glfwPollEvents();
     }
     glUseProgram(0);
-=======
-#include "CSCIx229.h"
-#include "compileshaders.h"
-#include "camera.h"
-// specifying shader file names
-const char *vertexShader = "./Shaders/shader.vs";
-const char *fragmentShader = "./Shaders/shader.fs";
-unsigned int vao;
-unsigned int vbo;
-GLuint shader;
-//imported noise library WOOOOOOOOO
-float* generateNoise()
-{
-    // Create and configure FastNoise object
-    FastNoiseLite noise;
-    noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-
-    // Gather noise data
-    float noiseData[10];
-    int index = 0;
-
-    for (int y = 0; y < 128; y++)
-    {
-        for (int x = 0; x < 128; x++)
-        {
-            noiseData[index++] = noise.GetNoise((float)x, (float)y);
-        }
-    }
-
-    // Do something with this data...
-
-    // Free data later
-    return noiseData;
-}
-
-/* VERTEX LAYER
-    - This is an abstract structure, We first generate a flat mesh using triangles with y-values = 0
-*/
-void vertexLayer()
-{
-    //CODE HERE
-}
-/* BIOME LAYER
-    - Groupings of vertices will be designated as regions, different
-    regions will have different lists of flora/densities of flora as well as color palettes/elevations 
-*/
-void biomeLayer()
-{
-    //CODE HERE
-}
-
-static void error_callback(int error, const char *description)
-{
-    fprintf(stderr, "Error: %s\n", description);
-}
-
-void init()
-{
-    glGenBuffers(1, &vbo);
-    glGenVertexArrays(1, &vao);
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-    float vertices[] =
-        {
-            -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, //top left
-            0.5f, 0.5f, 0.0f, 1.0f, 0.0f,  // top right
-            -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
-
-            0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-            0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
-            -0.5f, -0.5f, 0.0f, 0.0f, 1.0f
-        };
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 5 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * sizeof(float), (void *)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-}
-
-void render()
-{
-    const static float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glClearBufferfv(GL_COLOR, 0, black);
-    glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-int main(void)
-{
-    GLFWwindow *window;
-
-    glfwSetErrorCallback(error_callback);
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-
-    if (!window)
-    {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-    glfwMakeContextCurrent(window);
-    glewInit();
-    glfwSwapInterval(1);
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-    //  Set callback for keyboard input
-    Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
-    init();
-    while (!glfwWindowShouldClose(window))
-    {
-        shader = CompileShaders(vertexShader, fragmentShader);
-        camera.Inputs(window);
-        camera.Matrix(45.0f, 0.1f, 100.0f, shader, "camMatrix");
-        render();
-        glfwSwapBuffers(window);
-        glUseProgram(0);
-        glfwPollEvents();
-    }
-    
->>>>>>> Stashed changes
 }
