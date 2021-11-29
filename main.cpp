@@ -10,8 +10,8 @@ const char *lightF = "./Shaders/light.fs";
 unsigned int vao;
 unsigned int vbo;
 unsigned int ibo;
-int worldHeight = 200;
-int worldWidth = 200;
+int worldHeight = 100;
+int worldWidth = 100;
 int normCountLimit = worldHeight * worldWidth;
 int normCount = 0;
 bool changeBiome = false;
@@ -73,27 +73,27 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     {
         changeTerrain = true;
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-            frequency-=0.001;
+            frequency -= 0.001;
         else
-            frequency+=0.001;
+            frequency += 0.001;
     }
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
     {
         changeTerrain = true;
 
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-            lacunarity-=0.01;
+            lacunarity -= 0.01;
         else
-            lacunarity+=0.01;
+            lacunarity += 0.01;
     }
     if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
     {
         changeTerrain = true;
 
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-            gain-=0.01;
+            gain -= 0.01;
         else
-            gain+=0.01;
+            gain += 0.01;
     }
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
     {
@@ -103,34 +103,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         else
             octaves++;
     }
-}
-
-void setNormal(std::vector<Vertex> vertices,
-               unsigned int v1, unsigned int v2, unsigned int v3)
-{
-    /*
-    	Set Vector U to (Triangle.p2 minus Triangle.p1)
-	    Set Vector V to (Triangle.p3 minus Triangle.p1)
-        Set Normal.x to (multiply U.y by V.z) minus (multiply U.z by V.y)
-        Set Normal.y to (multiply U.z by V.x) minus (multiply U.x by V.z)
-        Set Normal.z to (multiply U.x by V.y) minus (multiply U.y by V.x)
-    */
-    //std::cout << "CALCULATING NORMALS..." << std::endl;
-    glm::vec3 p1 = vertices[v1].Position;
-    glm::vec3 p2 = vertices[v2].Position;
-    glm::vec3 p3 = vertices[v3].Position;
-
-    glm::vec3 U = p2 - p1;
-    glm::vec3 V = p3 - p1;
-    glm::vec3 normal;
-
-    normal.x = (U.x * V.z) - (U.z * V.y);
-    normal.y = (U.z * V.x) - (U.x * V.z);
-    normal.z = (U.x * V.y) - (U.y * V.x);
-
-    vertices[v1].Normal = normal;
-    vertices[v2].Normal = normal;
-    vertices[v3].Normal = normal;
 }
 
 glm::vec3 setColor(float pos, int biome)
@@ -252,16 +224,49 @@ Mesh Tree(int biome)
     return Mesh(vertices, indices);
 }
 
-glm::vec3 setNormal1(float x, float y, float z)
+void setNormal(std::vector<Vertex> &vertices,
+               unsigned int v1, unsigned int v2, unsigned int v3)
 {
-    float normX, normY, normZ;
-    normX = (x * z) - (z * y);
-    normY = (z * x) - (x * z);
-    normZ = (x * y) - (y * x);
-    glm::vec3 normal = glm::vec3(normX, normY, normZ);
-    return normal;
+    /*
+    	Set Vector U to (Triangle.p2 minus Triangle.p1)
+	    Set Vector V to (Triangle.p3 minus Triangle.p1)
+        Set Normal.x to (multiply U.y by V.z) minus (multiply U.z by V.y)
+        Set Normal.y to (multiply U.z by V.x) minus (multiply U.x by V.z)
+        Set Normal.z to (multiply U.x by V.y) minus (multiply U.y by V.x)
+    */
+    glm::vec3 A = vertices[v1].Position;
+    glm::vec3 B = vertices[v2].Position;
+    glm::vec3 C = vertices[v3].Position;
+
+    //  VECTOR FROM A TO B
+    float dx0 = A.x - B.x;
+    float dy0 = A.y - B.y;
+    float dz0 = A.z - B.z;
+    //  VECTOR FROM C TO A
+    float dx1 = C.x - A.x;
+    float dy1 = C.y - A.y;
+    float dz1 = C.z - A.z;
+    //  Normal
+    float Nx = dy0 * dz1 - dy1 * dz0;
+    float Ny = dz0 * dx1 - dz1 * dx0;
+    float Nz = dx0 * dy1 - dx1 * dy0;
+
+    glm::vec3 normal = glm::vec3(Nx, Ny, Nz);
+    vertices[v1].Normal = normal;
+    vertices[v2].Normal = normal;
+    vertices[v3].Normal = normal;
 }
 
+void setIndex(std::vector<unsigned int> &indices, unsigned int r3, unsigned int r2,
+              unsigned int r1, unsigned int l3, unsigned int l2, unsigned int l1)
+{
+    indices.push_back(r3);
+    indices.push_back(r2);
+    indices.push_back(r1);
+    indices.push_back(l3);
+    indices.push_back(l2);
+    indices.push_back(l1);
+}
 Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
               float frequency, float lacunarity, float gain, int octaves)
 {
@@ -288,7 +293,7 @@ Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
             float y = 100 * elevation;
             vertex.Color = setColor(y, biome);
             vertex.Position = glm::vec3(i, y, row);
-            vertex.Normal = setNormal1(i, y, row);
+
             vertices.push_back(vertex);
         }
         row++;
@@ -317,17 +322,10 @@ Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
         if (drawnRight == limit && drawnLeft == limit)
             break;
         //Draw order for right-facing and left-facing triangles
-        indices.push_back(r3);
-        indices.push_back(r2);
-        indices.push_back(r1);
-        indices.push_back(l3);
-        indices.push_back(l2);
-        indices.push_back(l1);
-        //flat shading for low poly look
-        //setNormal(vertices, r3, r2, r1);
-        //setNormal(vertices, l3, l2, l1);
-        normCount++;
-        //std::cout << normCount << "/" << vertices.size() << std::endl;
+        setIndex(indices, r3, r2, r1, l3, l2, l1);
+        setNormal(vertices, r3, r2, r1);
+        setNormal(vertices, l3, l2, l1);
+        //std::cout << vertices[l3].Normal.x << vertices[l3].Normal.y << vertices[l3].Normal.z << std::endl;
         inRowLeft++;
         drawnLeft++;
         inRowRight++;
@@ -469,8 +467,10 @@ int main(void)
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
     glfwWindowHint(GLFW_DEPTH_BITS, GL_TRUE);
     window = glfwCreateWindow(1920, 1080, "Terrain Generator", NULL, NULL);
 
@@ -484,7 +484,7 @@ int main(void)
     glewInit();
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
@@ -497,6 +497,10 @@ int main(void)
     //WORLD GENERATION
     Mesh world = genWorld(worldHeight, worldWidth, biome, seed,
                           0.01f, 2.0f, 0.6f, 16);
+    //for(int i = 0; i < world.vertices.size(); i++)
+    //{
+    //std::cout << "X: " <<world.vertices[i].Normal.x << "Y: "<< world.vertices[i].Normal.y << "Z: " <<world.vertices[i].Normal.z << std::endl;
+    //}
 
     //LIGHT SOURCE GENERATION
     Mesh lightSource = genLightSource();
@@ -514,18 +518,18 @@ int main(void)
         glm::mat4 lightModel = glm::mat4(1.0f);
         lightModel = glm::translate(lightModel, lightPos);
 
-        glm::vec3 worldPos = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::mat4 worldModel = glm::mat4(1.0f);
-        worldModel = glm::translate(worldModel, worldPos);
         glUseProgram(light);
+        //passing light model matrix to light shader
         glUniformMatrix4fv(glGetUniformLocation(light, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
+        //passing light color to light shader
         glUniform4f(glGetUniformLocation(light, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
         glUseProgram(shader);
+        //translating the model
         glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(worldModel));
+        //passing light color to the default shader
         glUniform4f(glGetUniformLocation(shader, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
         camera.updateMatrix(90.0f, 0.1f, 10000.0f);
-        glUseProgram(shader);
-
         camera.Matrix(shader, "camMatrix");
         if (changeBiome)
         {
@@ -543,14 +547,15 @@ int main(void)
             changeTerrain = false;
         }
         world.Draw();
+        skyBox.Draw();
+
+        glUseProgram(light);
+        //lightSource.Draw();
         // Exports the camera Position to the Fragment Shader for specular lighting
         glUniform3f(glGetUniformLocation(shader, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
         camera.Inputs(window);
-        skyBox.Draw();
-        glUseProgram(light);
         // Export the camMatrix to the Vertex Shader of the light cube
         camera.Matrix(light, "camMatrix");
-        lightSource.Draw();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

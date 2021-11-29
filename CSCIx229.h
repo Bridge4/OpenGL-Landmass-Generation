@@ -38,7 +38,6 @@
 #include <SDL/SDL_mixer.h>
 #elif defined(__APPLE__)
 #include <GLFW/glfw3.h>
-#include <GL/glu.h>
 #include <OpenGL/gl3.h>
 #else
 #include <GLFW/glfw3.h>
