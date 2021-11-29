@@ -4,7 +4,14 @@ Camera::Camera(int width, int height, glm::vec3 position)
 {
 	Camera::width = width;
 	Camera::height = height;
+	Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
+	Up = glm::vec3(0.0f, 1.0f, 0.0f);
+	Hor = glm::vec3(1.0f, 0.0f, 0.0f);
+	cameraMatrix = glm::mat4(1.0f);
 	Position = position;
+	speed = 1.0f;
+	sensitivity = 4.0f;
+	firstClick = true;
 }
 void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 {

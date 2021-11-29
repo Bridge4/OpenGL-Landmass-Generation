@@ -10,8 +10,8 @@ const char *lightF = "./Shaders/light.fs";
 unsigned int vao;
 unsigned int vbo;
 unsigned int ibo;
-int worldHeight = 100;
-int worldWidth = 100;
+int worldHeight = 1000;
+int worldWidth = 1000;
 int normCountLimit = worldHeight * worldWidth;
 int normCount = 0;
 bool changeBiome = false;
@@ -32,6 +32,7 @@ static void error_callback(int error, const char *description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
@@ -162,68 +163,6 @@ glm::vec3 setColor(float pos, int biome)
         return groundColor;
 }
 
-Mesh Tree(int biome)
-{
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<glm::vec3> locations;
-    //this is not pretty I KNOW
-    locations.push_back(glm::vec3(-5, -5, 5));
-    locations.push_back(glm::vec3(-5, -5, -5));
-    locations.push_back(glm::vec3(5, -5, -5));
-    locations.push_back(glm::vec3(5, -5, 5));
-    locations.push_back(glm::vec3(-5, 5, 5));
-    locations.push_back(glm::vec3(-5, 5, -5));
-    locations.push_back(glm::vec3(5, 5, -5));
-    locations.push_back(glm::vec3(5, 5, 5));
-    unsigned int lightIndices[] =
-        {
-            0, 1, 2,
-            0, 2, 3,
-
-            0, 7, 3,
-            0, 4, 7,
-
-            3, 6, 2,
-            3, 7, 6,
-
-            2, 5, 1,
-            2, 6, 5,
-
-            1, 4, 0,
-            1, 5, 4,
-
-            4, 6, 7,
-            4, 5, 6};
-    for (int i = 0; i < locations.size(); i++)
-    {
-        Vertex vertex;
-        vertex.Position = locations[i];
-        //spring
-        if (biome == 1)
-        {
-            vertex.Color = glm::vec3(0.224, 0.478, 0.216);
-        }
-        //summer
-        else if (biome == 2)
-        {
-            vertex.Color = glm::vec3(0.224, 0.478, 0.216);
-        }
-        //autumn
-        else if (biome == 3)
-        {
-            vertex.Color = glm::vec3(0.224, 0.478, 0.216);
-        }
-        //winter
-        else if (biome == 4)
-        {
-            vertex.Color = glm::vec3(0.224, 0.478, 0.216);
-        }
-        vertices.push_back(vertex);
-    }
-    return Mesh(vertices, indices);
-}
-
 void setNormal(std::vector<Vertex> &vertices,
                unsigned int v1, unsigned int v2, unsigned int v3)
 {
@@ -267,6 +206,7 @@ void setIndex(std::vector<unsigned int> &indices, unsigned int r3, unsigned int 
     indices.push_back(l2);
     indices.push_back(l1);
 }
+
 Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
               float frequency, float lacunarity, float gain, int octaves)
 {
@@ -484,12 +424,12 @@ int main(void)
     glewInit();
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
     //CAMERA
-    Camera camera(width, height, glm::vec3(0.0f, 0.0f, 1.0f));
+    Camera camera(width, height, glm::vec3(worldWidth/2, 40.0f, worldHeight));
 
     //SKYBOX GENERATION
     Mesh skyBox = genSkyBox(worldHeight, worldWidth);
@@ -497,10 +437,6 @@ int main(void)
     //WORLD GENERATION
     Mesh world = genWorld(worldHeight, worldWidth, biome, seed,
                           0.01f, 2.0f, 0.6f, 16);
-    //for(int i = 0; i < world.vertices.size(); i++)
-    //{
-    //std::cout << "X: " <<world.vertices[i].Normal.x << "Y: "<< world.vertices[i].Normal.y << "Z: " <<world.vertices[i].Normal.z << std::endl;
-    //}
 
     //LIGHT SOURCE GENERATION
     Mesh lightSource = genLightSource();
@@ -513,7 +449,7 @@ int main(void)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //LIGHTING
-        glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        glm::vec4 lightColor = glm::vec4(1.0f, 0.1f, 1.0f, 1.0f);
         glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
         glm::mat4 lightModel = glm::mat4(1.0f);
         lightModel = glm::translate(lightModel, lightPos);
