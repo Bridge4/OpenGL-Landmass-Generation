@@ -4,7 +4,6 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices)
 {
     this->vertices = vertices;
     this->indices = indices;
-
     setupMesh();
 }
 
@@ -14,12 +13,14 @@ void Mesh::setupMesh()
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
+
     //bind buffers
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
     //vertex data
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), 
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),
                  &vertices[0], GL_STATIC_DRAW);
     //index data
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
@@ -29,20 +30,19 @@ void Mesh::setupMesh()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
     // vertex colors
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
-                         (void *)offsetof(Vertex, Color));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void *)offsetof(Vertex, Color));
     // vertex normals
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
-                         (void *)offsetof(Vertex, Normal));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void *)offsetof(Vertex, Normal));
     // vertex texture coords
-
     //glEnableVertexAttribArray(3);
-    //glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
+    //glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
     //                     (void *)offsetof(Vertex, TexCoords));
 }
 
-void Mesh::Draw()
+void Mesh::Draw(int primType)
 {
     /*
     unsigned int diffuseNr = 1;
@@ -65,7 +65,12 @@ void Mesh::Draw()
     */
     // draw mesh
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    if (primType == 1)
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    else if (primType == 2)
+    {
+        glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
+    }
     //glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }

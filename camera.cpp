@@ -13,6 +13,7 @@ Camera::Camera(int width, int height, glm::vec3 position)
 	sensitivity = 4.0f;
 	firstClick = true;
 }
+
 void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 {
 	// Initializes matrices since otherwise they will be the null matrix

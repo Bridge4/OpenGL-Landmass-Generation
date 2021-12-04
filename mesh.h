@@ -2,8 +2,6 @@
 #define MESH_CLASS_H
 #include "CSCIx229.h"
 //source: https://learnopengl.com/Model-Loading/Mesh
-//modified it so i dont need to use a shader object in the Draw function but rather 
-//a GLuint from my compile shaders function
 
 struct Vertex
 {
@@ -26,9 +24,8 @@ public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
-    
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
-    void Draw();
+    void Draw(int primType=1);
 
 private:
     //  render data

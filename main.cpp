@@ -16,16 +16,18 @@ int normCountLimit = worldHeight * worldWidth;
 int normCount = 0;
 bool changeBiome = false;
 int biome = 1;
-int changeSeed = false;
+int scale = 150;
+bool changeSeed = false;
 int seed = 1337;
 float lightX = worldWidth;
 float lightY = 20.0f;
 float lightZ = worldHeight;
-float frequency = 0.01f;
-float lacunarity = 2.0f;
-float gain = 0.6f;
+float frequency = 0.004f;
+float lacunarity = 3.0f;
+float gain = 0.3f;
 int octaves = 16;
 bool changeTerrain = false;
+int shadeType = 0;
 GLuint shader, light;
 
 static void error_callback(int error, const char *description)
@@ -81,7 +83,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
     {
         changeTerrain = true;
-
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
             lacunarity -= 0.01;
         else
@@ -103,6 +104,122 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             octaves--;
         else
             octaves++;
+    }
+    if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+    {
+        changeTerrain = true;
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            scale -= 10;
+        scale += 10;
+    }
+}
+
+void setNormal(std::vector<Vertex> &vertices,
+               unsigned int v1, unsigned int v2, unsigned int v3)
+{
+    /*
+        From khronos website
+    	Set Vector U to (Triangle.p2 minus Triangle.p1)
+	    Set Vector V to (Triangle.p3 minus Triangle.p1)
+        Set Normal.x to (multiply U.y by V.z) minus (multiply U.z by V.y)
+        Set Normal.y to (multiply U.z by V.x) minus (multiply U.x by V.z)
+        Set Normal.z to (multiply U.x by V.y) minus (multiply U.y by V.x)
+    */
+    glm::vec3 A = vertices[v1].Position;
+    glm::vec3 B = vertices[v2].Position;
+    glm::vec3 C = vertices[v3].Position;
+
+    //From my lighting homework
+
+    //  VECTOR FROM A TO B
+    float dx0 = A.x - B.x;
+    float dy0 = A.y - B.y;
+    float dz0 = A.z - B.z;
+    //  VECTOR FROM C TO A
+    float dx1 = C.x - A.x;
+    float dy1 = C.y - A.y;
+    float dz1 = C.z - A.z;
+    //  Normal
+    float Nx = dy0 * dz1 - dy1 * dz0;
+    float Ny = dz0 * dx1 - dz1 * dx0;
+    float Nz = dx0 * dy1 - dx1 * dy0;
+
+    glm::vec3 normal = glm::vec3(Nx, Ny, Nz);
+    vertices[v1].Normal = normal;
+    vertices[v2].Normal = normal;
+    vertices[v3].Normal = normal;
+}
+
+void setIndex(std::vector<unsigned int> &indices, unsigned int r3, unsigned int r2,
+              unsigned int r1, unsigned int l3, unsigned int l2, unsigned int l1)
+{
+    indices.push_back(r3);
+    indices.push_back(r2);
+    indices.push_back(r1);
+    indices.push_back(l3);
+    indices.push_back(l2);
+    indices.push_back(l1);
+}
+
+void setIndices(std::vector<unsigned int> &indices, std::vector<Vertex> &vertices)
+{
+    //DRAW ORDER OF TRIANGLES
+    //right facing triangle draw order
+    unsigned int r1, r2, r3;
+    r1 = worldWidth;
+    r2 = 0;
+    r3 = 1;
+    //left facing triangle draw order
+    unsigned int l1, l2, l3;
+    l1 = worldWidth + 1;
+    l2 = worldWidth;
+    l3 = 1;
+    //total drawn in current row
+    int inRowRight = 0;
+    int inRowLeft = 0;
+    //total drawn overall
+    int drawnRight = 0;
+    int drawnLeft = 0;
+    //limit of triangles to draw
+    int limit = (worldWidth - 1) * (worldHeight - 1);
+    for (int i = 0; i < vertices.size(); i += 1)
+    {
+        if (drawnRight == limit && drawnLeft == limit)
+            break;
+        //Draw order for right-facing and left-facing triangles
+        setIndex(indices, r3, r2, r1, l3, l2, l1);
+        setNormal(vertices, r3, r2, r1);
+        setNormal(vertices, l3, l2, l1);
+        inRowLeft++;
+        drawnLeft++;
+        inRowRight++;
+        drawnRight++;
+        if (inRowLeft == worldWidth - 1)
+        {
+            l1 += 2;
+            l2 += 2;
+            l3 += 2;
+            inRowLeft = 0;
+        }
+        else
+        {
+            l1++;
+            l2++;
+            l3++;
+        }
+        if (inRowRight == worldWidth - 1)
+        {
+            r1 += 2;
+            r2 += 2;
+            r3 += 2;
+            inRowRight = 0;
+        }
+        else
+        {
+            r1++;
+            r2++;
+            r3++;
+        }
     }
 }
 
@@ -163,52 +280,7 @@ glm::vec3 setColor(float pos, int biome)
         return groundColor;
 }
 
-void setNormal(std::vector<Vertex> &vertices,
-               unsigned int v1, unsigned int v2, unsigned int v3)
-{
-    /*
-    	Set Vector U to (Triangle.p2 minus Triangle.p1)
-	    Set Vector V to (Triangle.p3 minus Triangle.p1)
-        Set Normal.x to (multiply U.y by V.z) minus (multiply U.z by V.y)
-        Set Normal.y to (multiply U.z by V.x) minus (multiply U.x by V.z)
-        Set Normal.z to (multiply U.x by V.y) minus (multiply U.y by V.x)
-    */
-    glm::vec3 A = vertices[v1].Position;
-    glm::vec3 B = vertices[v2].Position;
-    glm::vec3 C = vertices[v3].Position;
-
-    //  VECTOR FROM A TO B
-    float dx0 = A.x - B.x;
-    float dy0 = A.y - B.y;
-    float dz0 = A.z - B.z;
-    //  VECTOR FROM C TO A
-    float dx1 = C.x - A.x;
-    float dy1 = C.y - A.y;
-    float dz1 = C.z - A.z;
-    //  Normal
-    float Nx = dy0 * dz1 - dy1 * dz0;
-    float Ny = dz0 * dx1 - dz1 * dx0;
-    float Nz = dx0 * dy1 - dx1 * dy0;
-
-    glm::vec3 normal = glm::vec3(Nx, Ny, Nz);
-    vertices[v1].Normal = normal;
-    vertices[v2].Normal = normal;
-    vertices[v3].Normal = normal;
-}
-
-void setIndex(std::vector<unsigned int> &indices, unsigned int r3, unsigned int r2,
-              unsigned int r1, unsigned int l3, unsigned int l2, unsigned int l1)
-{
-    indices.push_back(r3);
-    indices.push_back(r2);
-    indices.push_back(r1);
-    indices.push_back(l3);
-    indices.push_back(l2);
-    indices.push_back(l1);
-}
-
-Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
-              float frequency, float lacunarity, float gain, int octaves)
+void setWorldVertices(std::vector<Vertex> &vertices)
 {
     FastNoiseLite noise;
     noise.SetSeed(seed);
@@ -217,11 +289,7 @@ Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
     noise.SetFractalLacunarity(lacunarity);
     noise.SetFractalGain(gain);
     noise.SetFractalOctaves(octaves);
-    // this setting
     noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<float> v;
     //construct vertex positions for mesh
     float row = 0;
     while (row < worldHeight)
@@ -230,73 +298,22 @@ Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
         {
             Vertex vertex;
             float elevation = noise.GetNoise((float)i, (float)row);
-            float y = 100 * elevation;
+            float y = scale * elevation;
             vertex.Color = setColor(y, biome);
             vertex.Position = glm::vec3(i, y, row);
-
             vertices.push_back(vertex);
         }
         row++;
     }
-    //DRAW ORDER OF TRIANGLES
-    //right facing triangle draw order
-    unsigned int r1, r2, r3;
-    r1 = worldWidth;
-    r2 = 0;
-    r3 = 1;
-    //left facing triangle draw order
-    unsigned int l1, l2, l3;
-    l1 = worldWidth + 1;
-    l2 = worldWidth;
-    l3 = 1;
-    //total drawn in current row
-    int inRowRight = 0;
-    int inRowLeft = 0;
-    //total drawn overall
-    int drawnRight = 0;
-    int drawnLeft = 0;
-    //limit of triangles to draw
-    int limit = (worldWidth - 1) * (worldHeight - 1);
-    for (int i = 0; i < vertices.size(); i += 1)
-    {
-        if (drawnRight == limit && drawnLeft == limit)
-            break;
-        //Draw order for right-facing and left-facing triangles
-        setIndex(indices, r3, r2, r1, l3, l2, l1);
-        setNormal(vertices, r3, r2, r1);
-        setNormal(vertices, l3, l2, l1);
-        //std::cout << vertices[l3].Normal.x << vertices[l3].Normal.y << vertices[l3].Normal.z << std::endl;
-        inRowLeft++;
-        drawnLeft++;
-        inRowRight++;
-        drawnRight++;
-        if (inRowLeft == worldWidth - 1)
-        {
-            l1 += 2;
-            l2 += 2;
-            l3 += 2;
-            inRowLeft = 0;
-        }
-        else
-        {
-            l1++;
-            l2++;
-            l3++;
-        }
-        if (inRowRight == worldWidth - 1)
-        {
-            r1 += 2;
-            r2 += 2;
-            r3 += 2;
-            inRowRight = 0;
-        }
-        else
-        {
-            r1++;
-            r2++;
-            r3++;
-        }
-    }
+}
+
+Mesh genWorld(int worldHeight, int worldWidth, int biome, int seed,
+              float frequency, float lacunarity, float gain, int octaves, int scale)
+{
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    setWorldVertices(vertices);
+    setIndices(indices, vertices);
     return Mesh(vertices, indices);
 }
 
@@ -323,7 +340,7 @@ Mesh genSkyBox(int worldHeight, int worldWidth)
     {
         Vertex vertex;
         vertex.Position = locations[i];
-        vertex.Color = glm::vec3(0.224, 0.635, 0.682);
+        vertex.Color = glm::vec3(1, 1, 1);
         vertices.push_back(vertex);
     }
     unsigned int skyIndices[] =
@@ -398,6 +415,220 @@ Mesh genLightSource()
     return Mesh(vertices, indices);
 }
 
+Mesh cube(float startPoint=1, float xOffset=0, float yOffset=0, float zOffset=0)
+{
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    std::vector<glm::vec3> locations;
+    //this is not pretty I KNOW
+    locations.push_back(glm::vec3(-startPoint + xOffset, -startPoint + yOffset,  startPoint + zOffset));
+    locations.push_back(glm::vec3(-startPoint + xOffset, -startPoint + yOffset, -startPoint + zOffset));
+    locations.push_back(glm::vec3( startPoint + xOffset, -startPoint + yOffset, -startPoint + zOffset));
+    locations.push_back(glm::vec3( startPoint + xOffset, -startPoint + yOffset,  startPoint + zOffset));
+    locations.push_back(glm::vec3(-startPoint + xOffset,  startPoint + yOffset,  startPoint + zOffset));
+    locations.push_back(glm::vec3(-startPoint + xOffset,  startPoint + yOffset, -startPoint + zOffset));
+    locations.push_back(glm::vec3( startPoint + xOffset,  startPoint + yOffset, -startPoint + zOffset));
+    locations.push_back(glm::vec3( startPoint + xOffset,  startPoint + yOffset,  startPoint + zOffset));
+    for (int i = 0; i < locations.size(); i++)
+    {
+        Vertex vertex;
+        vertex.Position = locations[i];
+        vertices.push_back(vertex);
+    }
+    unsigned int lightIndices[] =
+        {
+            0, 1, 2,
+            0, 2, 3,
+
+            3, 7, 0,
+            7, 4, 0,
+
+            2, 6, 3,
+            6, 7, 3,
+
+            1, 5, 2,
+            5, 6, 2,
+
+            0, 4, 1,
+            4, 5, 1,
+
+            7, 6, 4,
+            6, 5, 4};
+    for (int i = 0; i < 36; i++)
+    {
+        indices.push_back(lightIndices[i]);
+    }
+    return Mesh(vertices, indices);
+}
+
+/*
+Mesh genTrunk(float x, float y, float z, float scale)
+{
+
+}
+*/
+
+std::vector<Mesh> genFlora(float startVertexPosition)
+{
+    //USING L-SYSTEMS TO GENERATE FRACTAL FLORA
+    std::vector<Mesh> flora;
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    std::vector<glm::vec3> leafLocations;
+    std::vector<Vertex> leafVertices;
+    std::vector<unsigned int> leafIndices;
+
+    std::string sentence;
+    std::string next;
+    int limit = 2;
+    //starter
+    sentence.append("X");
+    //rules
+    std::string rule1 = "FF";
+    std::string rule2 = "F+[-F-XF-X][+FF][--X[+X]][++F-X]";
+    for (int i = 0; i < limit; i++)
+    {
+        std::cout << sentence << std::endl;
+        for (int j = 0; j < sentence.size(); j++)
+        {
+            if (sentence[j] == 'F')
+            {
+                next.append(rule1);
+            }
+            else if (sentence[j] == 'X')
+            {
+                next.append(rule2);
+            }
+        }
+        sentence = next;
+        next = "";
+    }
+    //construct shapes based on chars in sentence
+    Vertex startVertex;
+    startVertex.Position = glm::vec3(0, 0, 0);
+    startVertex.Color = glm::vec3(0.431, 0.388, 0.239);
+    bool push = false;
+    for (int i = 0; i < sentence.size(); i++)
+    {
+        Vertex nextVertex;
+        if (sentence[i] == 'F')
+        {
+            nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
+            nextVertex.Color = startVertex.Color;
+            flora.push_back(cube(0.25, 0, startVertex.Position.y + 1, 0));
+            
+            startVertex = nextVertex;
+        }
+        else if (sentence[i] == '+')
+        {
+            std::vector<glm::vec3> cubePos;
+            nextVertex.Position = startVertex.Position + glm::vec3(0.25, 0, 0);
+            nextVertex.Color = startVertex.Color;
+            flora.push_back(cube(0.25, startVertex.Position.x + 0.25, 0, 0));
+            
+            
+            startVertex = nextVertex;
+        }
+        else if (sentence[i] == '-')
+        {
+            std::vector<glm::vec3> cubePos;
+            nextVertex.Position = startVertex.Position + glm::vec3(0.25, 0, 0);
+            nextVertex.Color = startVertex.Color;
+            flora.push_back(cube(0.25, startVertex.Position.x - 0.25, 0, 0));
+
+            
+            startVertex = nextVertex;
+        }
+        //store location of leaf
+        else if (sentence[i] == 'X')
+        {
+            leafLocations.push_back(startVertex.Position);
+            Vertex v1;
+            Vertex v2;
+            Vertex v3;
+            v1.Position = startVertex.Position;
+            v2.Position = startVertex.Position + glm::vec3(-0.25, 0, 0);
+            v3.Position = startVertex.Position + glm::vec3(0, 0.25, 0);
+            v1.Color = glm::vec3(0, 1, 0);
+            v2.Color = glm::vec3(0, 1, 0);
+            v3.Color = glm::vec3(0, 1, 0);
+            leafVertices.push_back(v1);
+            leafVertices.push_back(v2);
+            leafVertices.push_back(v3);
+            leafIndices.push_back(leafVertices.size() - 3);
+            leafIndices.push_back(leafVertices.size() - 2);
+            leafIndices.push_back(leafVertices.size() - 1);
+        }
+        else if (sentence[i] == '[')
+        {
+            Vertex trueStart = startVertex;
+            while (sentence[i] != ']')
+            {
+
+
+
+                if (sentence[i] == 'F')
+                {
+                    std::vector<glm::vec3> cubePos;
+                    nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
+                    nextVertex.Color = startVertex.Color;
+                    flora.push_back(cube(0.25, 0, startVertex.Position.y + 1, 0));
+                    
+                    
+    
+                    startVertex = nextVertex;
+                }
+                else if (sentence[i] == '+')
+                {
+                    std::vector<glm::vec3> cubePos;
+                    nextVertex.Position = startVertex.Position + glm::vec3(0.25, 0, 0);
+                    nextVertex.Color = startVertex.Color;
+                    flora.push_back(cube(0.25, startVertex.Position.x + 0.25, 0, 0));
+
+                    
+    
+                    startVertex = nextVertex;
+                }
+                else if (sentence[i] == '-')
+                {
+                    std::vector<glm::vec3> cubePos;
+                    nextVertex.Position = startVertex.Position + glm::vec3(-0.25, 0, 0);
+                    nextVertex.Color = startVertex.Color;
+                    flora.push_back(cube(0.25, -0.25, 0, 0));
+                    startVertex = nextVertex;
+                }
+                //LEAF
+                else if (sentence[i] == 'X')
+                {
+                    leafLocations.push_back(startVertex.Position);
+                    Vertex v1;
+                    Vertex v2;
+                    Vertex v3;
+                    v1.Position = startVertex.Position;
+                    v2.Position = startVertex.Position + glm::vec3(-0.25, 0, 0);
+                    v3.Position = startVertex.Position + glm::vec3(0, 0.25, 0);
+                    v1.Color = glm::vec3(0, 1, 0);
+                    v2.Color = glm::vec3(0, 1, 0);
+                    v3.Color = glm::vec3(0, 1, 0);
+                    leafVertices.push_back(v1);
+                    leafVertices.push_back(v2);
+                    leafVertices.push_back(v3);
+                    leafIndices.push_back(leafVertices.size() - 3);
+                    leafIndices.push_back(leafVertices.size() - 2);
+                    leafIndices.push_back(leafVertices.size() - 1);
+                }
+
+                i++;
+            }
+            startVertex = trueStart;
+        }
+    }
+    Mesh leaf(leafVertices, leafIndices);
+    flora.push_back(leaf);
+    return flora;
+}
+
 int main(void)
 {
     GLFWwindow *window;
@@ -412,7 +643,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
     glfwWindowHint(GLFW_DEPTH_BITS, GL_TRUE);
-    window = glfwCreateWindow(1920, 1080, "Terrain Generator", NULL, NULL);
+    window = glfwCreateWindow(1920, 1080, "Sayed Abdulmohsen Alhashemi", NULL, NULL);
 
     if (!window)
     {
@@ -424,19 +655,18 @@ int main(void)
     glewInit();
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     int width, height;
     glfwGetWindowSize(window, &width, &height);
-
     //CAMERA
-    Camera camera(width, height, glm::vec3(worldWidth/2, 40.0f, worldHeight));
-
+    //Camera camera(width, height, glm::vec3(worldWidth / 2, 40.0f, worldHeight));
+    Camera camera(width, height, glm::vec3(0, 0, 0));
     //SKYBOX GENERATION
     Mesh skyBox = genSkyBox(worldHeight, worldWidth);
 
     //WORLD GENERATION
     Mesh world = genWorld(worldHeight, worldWidth, biome, seed,
-                          0.01f, 2.0f, 0.6f, 16);
+                          frequency, lacunarity, gain, octaves, scale);
 
     //LIGHT SOURCE GENERATION
     Mesh lightSource = genLightSource();
@@ -444,52 +674,63 @@ int main(void)
     //SHADER COMPILATION
     shader = CompileShaders(vertexShader, fragmentShader);
     light = CompileShaders(lightV, lightF);
-
+    std::vector<Mesh> flora = genFlora(0);
     while (!glfwWindowShouldClose(window))
     {
+        glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         //LIGHTING
-        glm::vec4 lightColor = glm::vec4(1.0f, 0.1f, 1.0f, 1.0f);
+        glm::vec4 lightColor = glm::vec4(1, 1, 1, 1.0f);
         glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
         glm::mat4 lightModel = glm::mat4(1.0f);
         lightModel = glm::translate(lightModel, lightPos);
-
         glm::mat4 worldModel = glm::mat4(1.0f);
         glUseProgram(light);
+
         //passing light model matrix to light shader
         glUniformMatrix4fv(glGetUniformLocation(light, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
+
         //passing light color to light shader
         glUniform4f(glGetUniformLocation(light, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
         glUseProgram(shader);
+
         //translating the model
         glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(worldModel));
+
         //passing light color to the default shader
         glUniform4f(glGetUniformLocation(shader, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
         camera.updateMatrix(90.0f, 0.1f, 10000.0f);
         camera.Matrix(shader, "camMatrix");
+
         if (changeBiome)
         {
-            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves);
+            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves, scale);
             changeBiome = false;
         }
         if (changeSeed)
         {
-            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves);
+            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves, scale);
             changeSeed = false;
         }
         if (changeTerrain)
         {
-            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves);
+            world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves, scale);
             changeTerrain = false;
         }
-        world.Draw();
-        skyBox.Draw();
-
+        for(int i = 0; i < flora.size(); i++)
+        {
+            flora[i].Draw();
+        }
+        //world.Draw();
+        //skyBox.Draw();
         glUseProgram(light);
-        //lightSource.Draw();
+        lightSource.Draw();
+
         // Exports the camera Position to the Fragment Shader for specular lighting
         glUniform3f(glGetUniformLocation(shader, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
         camera.Inputs(window);
+
         // Export the camMatrix to the Vertex Shader of the light cube
         camera.Matrix(light, "camMatrix");
         glfwSwapBuffers(window);
