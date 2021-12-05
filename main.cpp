@@ -374,14 +374,22 @@ Mesh genLightSource()
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<glm::vec3> locations;
-    //this is not pretty I KNOW
+
+    //front bottom left
     locations.push_back(glm::vec3(-1, -1, 1));
+    //back bottom left
     locations.push_back(glm::vec3(-1, -1, -1));
+    //back bottom right
     locations.push_back(glm::vec3(1, -1, -1));
+    //front bottom right
     locations.push_back(glm::vec3(1, -1, 1));
+    //front top left
     locations.push_back(glm::vec3(-1, 1, 1));
+    //back top left
     locations.push_back(glm::vec3(-1, 1, -1));
+    //back top right
     locations.push_back(glm::vec3(1, 1, -1));
+    //front top right
     locations.push_back(glm::vec3(1, 1, 1));
     for (int i = 0; i < locations.size(); i++)
     {
@@ -415,27 +423,42 @@ Mesh genLightSource()
     return Mesh(vertices, indices);
 }
 
-Mesh cube(float startPoint=1, float xOffset=0, float yOffset=0, float zOffset=0)
+Mesh cube(glm::vec3 startVertex = glm::vec3(0, 0, 0), float scale = 1, bool leaf = false)
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<glm::vec3> locations;
-    //this is not pretty I KNOW
-    locations.push_back(glm::vec3(-startPoint + xOffset, -startPoint + yOffset,  startPoint + zOffset));
-    locations.push_back(glm::vec3(-startPoint + xOffset, -startPoint + yOffset, -startPoint + zOffset));
-    locations.push_back(glm::vec3( startPoint + xOffset, -startPoint + yOffset, -startPoint + zOffset));
-    locations.push_back(glm::vec3( startPoint + xOffset, -startPoint + yOffset,  startPoint + zOffset));
-    locations.push_back(glm::vec3(-startPoint + xOffset,  startPoint + yOffset,  startPoint + zOffset));
-    locations.push_back(glm::vec3(-startPoint + xOffset,  startPoint + yOffset, -startPoint + zOffset));
-    locations.push_back(glm::vec3( startPoint + xOffset,  startPoint + yOffset, -startPoint + zOffset));
-    locations.push_back(glm::vec3( startPoint + xOffset,  startPoint + yOffset,  startPoint + zOffset));
+    glm::vec3 trunkColor = glm::vec3(0.431, 0.388, 0.239);
+    glm::vec3 leafColor = glm::vec3(0.208, 0.345, 0.204);
+
+    glm::vec3 topLeftF = startVertex + glm::vec3(0, scale, 0);
+    glm::vec3 bottomRightF = startVertex + glm::vec3(scale, 0, 0);
+    glm::vec3 topRightF = startVertex + glm::vec3(scale, scale, 0);
+    glm::vec3 topLeftB = startVertex + glm::vec3(0, scale, scale);
+    glm::vec3 bottomRightB = startVertex + glm::vec3(scale, 0, scale);
+    glm::vec3 topRightB = startVertex + glm::vec3(scale, scale, scale);
+    glm::vec3 bottomLeftB = startVertex + glm::vec3(0, 0, scale);
+
+    locations.push_back(startVertex);
+    locations.push_back(bottomLeftB);
+    locations.push_back(bottomRightB);
+    locations.push_back(bottomRightF);
+    locations.push_back(topLeftF);
+    locations.push_back(topLeftB);
+    locations.push_back(topRightB);
+    locations.push_back(topRightF);
+
     for (int i = 0; i < locations.size(); i++)
     {
         Vertex vertex;
         vertex.Position = locations[i];
+        if (leaf)
+            vertex.Color = leafColor;
+        else
+            vertex.Color = trunkColor;
         vertices.push_back(vertex);
     }
-    unsigned int lightIndices[] =
+    unsigned int cubeIndices[] =
         {
             0, 1, 2,
             0, 2, 3,
@@ -455,9 +478,7 @@ Mesh cube(float startPoint=1, float xOffset=0, float yOffset=0, float zOffset=0)
             7, 6, 4,
             6, 5, 4};
     for (int i = 0; i < 36; i++)
-    {
-        indices.push_back(lightIndices[i]);
-    }
+        indices.push_back(cubeIndices[i]);
     return Mesh(vertices, indices);
 }
 
@@ -475,17 +496,13 @@ std::vector<Mesh> genFlora(float startVertexPosition)
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
-    std::vector<glm::vec3> leafLocations;
-    std::vector<Vertex> leafVertices;
-    std::vector<unsigned int> leafIndices;
-
     std::string sentence;
     std::string next;
     int limit = 2;
     //starter
     sentence.append("X");
     //rules
-    std::string rule1 = "FF";
+    std::string rule1 = "X";
     std::string rule2 = "F+[-F-XF-X][+FF][--X[+X]][++F-X]";
     for (int i = 0; i < limit; i++)
     {
@@ -507,7 +524,6 @@ std::vector<Mesh> genFlora(float startVertexPosition)
     //construct shapes based on chars in sentence
     Vertex startVertex;
     startVertex.Position = glm::vec3(0, 0, 0);
-    startVertex.Color = glm::vec3(0.431, 0.388, 0.239);
     bool push = false;
     for (int i = 0; i < sentence.size(); i++)
     {
@@ -515,117 +531,72 @@ std::vector<Mesh> genFlora(float startVertexPosition)
         if (sentence[i] == 'F')
         {
             nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
-            nextVertex.Color = startVertex.Color;
-            flora.push_back(cube(0.25, 0, startVertex.Position.y + 1, 0));
-            
+            glm::vec3 startPos = startVertex.Position;
+            flora.push_back(cube(startPos));
             startVertex = nextVertex;
         }
         else if (sentence[i] == '+')
         {
-            std::vector<glm::vec3> cubePos;
-            nextVertex.Position = startVertex.Position + glm::vec3(0.25, 0, 0);
-            nextVertex.Color = startVertex.Color;
-            flora.push_back(cube(0.25, startVertex.Position.x + 0.25, 0, 0));
-            
-            
+            nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
+            glm::vec3 startPos = startVertex.Position;
+            flora.push_back(cube(startPos));
             startVertex = nextVertex;
         }
         else if (sentence[i] == '-')
         {
-            std::vector<glm::vec3> cubePos;
-            nextVertex.Position = startVertex.Position + glm::vec3(0.25, 0, 0);
-            nextVertex.Color = startVertex.Color;
-            flora.push_back(cube(0.25, startVertex.Position.x - 0.25, 0, 0));
-
-            
+            nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
+            glm::vec3 startPos = startVertex.Position;
+            flora.push_back(cube(startPos));
             startVertex = nextVertex;
         }
         //store location of leaf
         else if (sentence[i] == 'X')
         {
-            leafLocations.push_back(startVertex.Position);
-            Vertex v1;
-            Vertex v2;
-            Vertex v3;
-            v1.Position = startVertex.Position;
-            v2.Position = startVertex.Position + glm::vec3(-0.25, 0, 0);
-            v3.Position = startVertex.Position + glm::vec3(0, 0.25, 0);
-            v1.Color = glm::vec3(0, 1, 0);
-            v2.Color = glm::vec3(0, 1, 0);
-            v3.Color = glm::vec3(0, 1, 0);
-            leafVertices.push_back(v1);
-            leafVertices.push_back(v2);
-            leafVertices.push_back(v3);
-            leafIndices.push_back(leafVertices.size() - 3);
-            leafIndices.push_back(leafVertices.size() - 2);
-            leafIndices.push_back(leafVertices.size() - 1);
+            nextVertex.Position = startVertex.Position + glm::vec3(0.5, 1, 0);
+            startVertex = nextVertex;
+            glm::vec3 startPos = startVertex.Position;
+            flora.push_back(cube(startPos, 1, true));
         }
         else if (sentence[i] == '[')
         {
             Vertex trueStart = startVertex;
             while (sentence[i] != ']')
             {
-
-
-
                 if (sentence[i] == 'F')
                 {
-                    std::vector<glm::vec3> cubePos;
+
                     nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
-                    nextVertex.Color = startVertex.Color;
-                    flora.push_back(cube(0.25, 0, startVertex.Position.y + 1, 0));
-                    
-                    
-    
+                    glm::vec3 startPos = startVertex.Position;
+                    flora.push_back(cube(startPos));
                     startVertex = nextVertex;
                 }
                 else if (sentence[i] == '+')
                 {
-                    std::vector<glm::vec3> cubePos;
-                    nextVertex.Position = startVertex.Position + glm::vec3(0.25, 0, 0);
-                    nextVertex.Color = startVertex.Color;
-                    flora.push_back(cube(0.25, startVertex.Position.x + 0.25, 0, 0));
-
-                    
-    
+                    nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
+                    glm::vec3 startPos = startVertex.Position;
+                    flora.push_back(cube(startPos));
                     startVertex = nextVertex;
                 }
                 else if (sentence[i] == '-')
                 {
-                    std::vector<glm::vec3> cubePos;
-                    nextVertex.Position = startVertex.Position + glm::vec3(-0.25, 0, 0);
-                    nextVertex.Color = startVertex.Color;
-                    flora.push_back(cube(0.25, -0.25, 0, 0));
+                    nextVertex.Position = startVertex.Position + glm::vec3(-1, 0, 0);
+                    glm::vec3 startPos = startVertex.Position;
+                    flora.push_back(cube(startPos));
                     startVertex = nextVertex;
                 }
                 //LEAF
                 else if (sentence[i] == 'X')
                 {
-                    leafLocations.push_back(startVertex.Position);
-                    Vertex v1;
-                    Vertex v2;
-                    Vertex v3;
-                    v1.Position = startVertex.Position;
-                    v2.Position = startVertex.Position + glm::vec3(-0.25, 0, 0);
-                    v3.Position = startVertex.Position + glm::vec3(0, 0.25, 0);
-                    v1.Color = glm::vec3(0, 1, 0);
-                    v2.Color = glm::vec3(0, 1, 0);
-                    v3.Color = glm::vec3(0, 1, 0);
-                    leafVertices.push_back(v1);
-                    leafVertices.push_back(v2);
-                    leafVertices.push_back(v3);
-                    leafIndices.push_back(leafVertices.size() - 3);
-                    leafIndices.push_back(leafVertices.size() - 2);
-                    leafIndices.push_back(leafVertices.size() - 1);
+                    nextVertex.Position = startVertex.Position + glm::vec3(0.5, 1, 0);
+                    startVertex = nextVertex;
+                    glm::vec3 startPos = startVertex.Position;
+                    flora.push_back(cube(startPos, 1, true));
                 }
-
                 i++;
             }
             startVertex = trueStart;
         }
     }
-    Mesh leaf(leafVertices, leafIndices);
-    flora.push_back(leaf);
     return flora;
 }
 
@@ -675,34 +646,47 @@ int main(void)
     shader = CompileShaders(vertexShader, fragmentShader);
     light = CompileShaders(lightV, lightF);
     std::vector<Mesh> flora = genFlora(0);
+    GLint shaderModelMatrix = glGetUniformLocation(shader, "model");
+    GLint shaderColorMatrix = glGetUniformLocation(shader, "lightColor");
+    GLint shaderCamMatrix = glGetUniformLocation(shader, "camPos");
+    GLint lightModelMatrix = glGetUniformLocation(light, "model");
+    GLint lightColorMatrix = glGetUniformLocation(light, "lightColor");
+
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         //LIGHTING
+        glUseProgram(light);
         glm::vec4 lightColor = glm::vec4(1, 1, 1, 1.0f);
         glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
         glm::mat4 lightModel = glm::mat4(1.0f);
         lightModel = glm::translate(lightModel, lightPos);
-        glm::mat4 worldModel = glm::mat4(1.0f);
-        glUseProgram(light);
-
         //passing light model matrix to light shader
-        glUniformMatrix4fv(glGetUniformLocation(light, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
-
+        glUniformMatrix4fv(lightModelMatrix, 1, GL_FALSE, glm::value_ptr(lightModel));
         //passing light color to light shader
-        glUniform4f(glGetUniformLocation(light, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+        glUniform4f(lightColorMatrix, lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+        // Export the camMatrix to the Vertex Shader of the light cube
+        camera.Matrix(light, "camMatrix");
+
+        //RENDERING
         glUseProgram(shader);
-
+        glm::vec3 worldPos = glm::vec3(0, 0, 0);
+        glm::mat4 worldModel = glm::mat4(1.0f);
+        worldModel = glm::translate(worldModel, worldPos);
         //translating the model
-        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(worldModel));
-
+        glUniformMatrix4fv(shaderModelMatrix, 1, GL_FALSE, glm::value_ptr(worldModel));
         //passing light color to the default shader
-        glUniform4f(glGetUniformLocation(shader, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+        glUniform4f(shaderColorMatrix, lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+
+        //CAMERA
         camera.updateMatrix(90.0f, 0.1f, 10000.0f);
         camera.Matrix(shader, "camMatrix");
+        // Exports the camera Position to the Fragment Shader for specular lighting
+        glUniform3f(shaderCamMatrix, camera.Position.x, camera.Position.y, camera.Position.z);
 
+        //GENERATING NEW LANDSCAPES
         if (changeBiome)
         {
             world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves, scale);
@@ -718,21 +702,15 @@ int main(void)
             world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves, scale);
             changeTerrain = false;
         }
-        for(int i = 0; i < flora.size(); i++)
-        {
+
+        //Draw Flora
+        for (int i = 0; i < flora.size(); i++)
             flora[i].Draw();
-        }
         //world.Draw();
         //skyBox.Draw();
         glUseProgram(light);
         lightSource.Draw();
-
-        // Exports the camera Position to the Fragment Shader for specular lighting
-        glUniform3f(glGetUniformLocation(shader, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
         camera.Inputs(window);
-
-        // Export the camMatrix to the Vertex Shader of the light cube
-        camera.Matrix(light, "camMatrix");
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
