@@ -7,8 +7,16 @@ const char *vertexShader = "./Shaders/shader.vs";
 const char *fragmentShader = "./Shaders/shader.fs";
 const char *lightV = "./Shaders/light.vs";
 const char *lightF = "./Shaders/light.fs";
+<<<<<<< Updated upstream
 int worldHeight = 1000;
 int worldWidth = 1000;
+=======
+unsigned int vao;
+unsigned int vbo;
+unsigned int ibo;
+int worldHeight = 5000;
+int worldWidth = 5000;
+>>>>>>> Stashed changes
 int normCountLimit = worldHeight * worldWidth;
 int normCount = 0;
 bool changeBiome = false;
