@@ -7,22 +7,10 @@ const char *vertexShader = "./Shaders/shader.vs";
 const char *fragmentShader = "./Shaders/shader.fs";
 const char *lightV = "./Shaders/light.vs";
 const char *lightF = "./Shaders/light.fs";
-<<<<<<< Updated upstream
 int worldHeight = 1000;
 int worldWidth = 1000;
-=======
-unsigned int vao;
-unsigned int vbo;
-unsigned int ibo;
-int worldHeight = 5000;
-int worldWidth = 5000;
->>>>>>> Stashed changes
-int normCountLimit = worldHeight * worldWidth;
-int normCount = 0;
-bool changeBiome = false;
 int biome = 1;
 int scale = 150;
-bool changeSeed = false;
 int seed = 1337;
 float lightX = worldWidth;
 float lightY = 20.0f;
@@ -32,7 +20,8 @@ float lacunarity = 3.0f;
 float gain = 0.3f;
 int octaves = 16;
 bool changeTerrain = false;
-int shadeType = 0;
+bool changeSeed = false;
+bool changeBiome = false;
 GLuint shader, light;
 
 static void error_callback(int error, const char *description)
@@ -126,11 +115,11 @@ int main(void)
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
         exit(EXIT_FAILURE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 #endif
     glfwWindowHint(GLFW_DEPTH_BITS, GL_TRUE);
     window = glfwCreateWindow(1920, 1080, "Sayed Abdulmohsen Alhashemi", NULL, NULL);
@@ -145,35 +134,31 @@ int main(void)
     glewInit();
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     int width, height;
     glfwGetWindowSize(window, &width, &height);
+
     //CAMERA
     Camera camera(width, height, glm::vec3(worldWidth / 2, 40.0f, worldHeight));
-    //Camera camera(width, height, glm::vec3(0, 0, 0));
     //SKYBOX GENERATION
     Mesh skyBox = genSkyBox(worldHeight, worldWidth);
-
     //WORLD GENERATION
     Mesh world = genWorld(worldHeight, worldWidth, biome, seed,
                           frequency, lacunarity, gain, octaves, scale);
+    //Ok so I got L-System fractal tree generation to work but the surface normals are all wrong and I don't have the willpower
+    //to fix them anymore.
     std::vector<std::vector<Mesh> > flora;
-    int count = 0;
 
-    for (int i = 0; i < world.vertices.size(); i++)
-    {
-        if (world.vertices[i].Position.y > 20 && count < 100)
-        {
-            flora.push_back(genFlora(world.vertices[i].Position));
-            count++;
-        }
-    }
+    flora.push_back(genFlora(glm::vec3(0,0,0)));
+
     //LIGHT SOURCE GENERATION
     Mesh lightSource = genLightSource();
 
     //SHADER COMPILATION
     shader = CompileShaders(vertexShader, fragmentShader);
     light = CompileShaders(lightV, lightF);
+
+    //Setting uniform varialble locations and making it more readable
     GLint shaderModelMatrix = glGetUniformLocation(shader, "model");
     GLint shaderColorMatrix = glGetUniformLocation(shader, "lightColor");
     GLint shaderCamMatrix = glGetUniformLocation(shader, "camPos");
@@ -230,17 +215,8 @@ int main(void)
             world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves, scale);
             changeTerrain = false;
         }
-
-        //Draw Flora
-        for (int i = 0; i < flora.size(); i++)
-        {
-            for (int j = 0; j < flora[i].size(); j++)
-            {
-                flora[i][j].Draw();
-            }
-        }
-        //world.Draw();
-
+        
+        world.Draw();
         skyBox.Draw();
         glUseProgram(light);
         lightSource.Draw();

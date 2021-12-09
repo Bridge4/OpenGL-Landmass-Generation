@@ -36,45 +36,18 @@ void Mesh::setupMesh()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void *)offsetof(Vertex, Normal));
-    // vertex texture coords
-    //glEnableVertexAttribArray(3);
-    //glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-    //                     (void *)offsetof(Vertex, TexCoords));
 }
 
 void Mesh::Draw(int primType)
 {
-    /*
-    unsigned int diffuseNr = 1;
-    unsigned int specularNr = 1;
-    for (unsigned int i = 0; i < textures.size(); i++)
-    {
-        glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
-        // retrieve texture number (the N in diffuse_textureN)
-        std::string number;
-        std::string name = textures[i].type;
-        if (name == "texture_diffuse")
-            number = std::to_string(diffuseNr++);
-        else if (name == "texture_specular")
-            number = std::to_string(specularNr++);
-
-        //shader.setFloat(("material." + name + number).c_str(), i);
-        //glBindTexture(GL_TEXTURE_2D, textures[i].id);
-    }
-    glActiveTexture(GL_TEXTURE0);
-    */
     // draw mesh
     glBindVertexArray(VAO);
     if (primType == 1)
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     else if (primType == 2)
-    {
         glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
-    }
     else
-    {
-        glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
-    }
+        glDrawElements(GL_POLYGON, indices.size(), GL_UNSIGNED_INT, 0);
     //glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
@@ -148,7 +121,8 @@ void setIndices(std::vector<unsigned int> &indices, std::vector<Vertex> &vertice
     int drawnLeft = 0;
     //limit of triangles to draw
     int limit = (worldWidth - 1) * (worldHeight - 1);
-    for (int i = 0; i < vertices.size(); i += 1)
+
+    for (int i = 0; i < (int) (int) vertices.size(); i += 1)
     {
         if (drawnRight == limit && drawnLeft == limit)
             break;
@@ -246,76 +220,8 @@ glm::vec3 setColor(float pos, int biome)
         return groundColor;
 }
 
-Mesh branch(glm::vec3 startVertex, float scale, bool leaf)
-{
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<glm::vec3> locations;
-    std::vector<glm::vec3> normals;
-    glm::vec3 trunkColor = glm::vec3(0.431, 0.388, 0.239);
-    glm::vec3 leafColor = glm::vec3(0.208, 0.345, 0.204);
-
-    //startVertex is bottom left
-    glm::vec3 topLeftF = startVertex + glm::vec3(0, scale, 0);
-    glm::vec3 bottomRightF = startVertex + glm::vec3(scale, 0, 0);
-    glm::vec3 topRightF = startVertex + glm::vec3(scale, scale, 0);
-    glm::vec3 topLeftB = startVertex + glm::vec3(0, scale, scale);
-    glm::vec3 bottomRightB = startVertex + glm::vec3(scale, 0, scale);
-    glm::vec3 topRightB = startVertex + glm::vec3(scale, scale, scale);
-    glm::vec3 bottomLeftB = startVertex + glm::vec3(0, 0, scale);
-
-    locations.push_back(startVertex);
-    locations.push_back(bottomLeftB);
-    locations.push_back(bottomRightB);
-    locations.push_back(bottomRightF);
-    locations.push_back(topLeftF);
-    locations.push_back(topLeftB);
-    locations.push_back(topRightB);
-    locations.push_back(topRightF);
-
-    for (int i = 0; i < locations.size(); i++)
-    {
-        Vertex vertex;
-        vertex.Position = locations[i];
-        if (leaf)
-            vertex.Color = leafColor;
-        else
-            vertex.Color = trunkColor;
-        vertices.push_back(vertex);
-    }
-    unsigned int cubeIndices[] =
-        {
-            0, 1, 2,
-            0, 2, 3,
-
-            3, 7, 0,
-            7, 4, 0,
-
-            2, 6, 3,
-            6, 7, 3,
-
-            1, 5, 2,
-            5, 6, 2,
-
-            0, 4, 1,
-            4, 5, 1,
-
-            7, 6, 4,
-            6, 5, 4};
-    for (int i = 0; i < 33; i += 3)
-    {
-        unsigned int i1 = cubeIndices[i - 2];
-        unsigned int i2 = cubeIndices[i - 1];
-        unsigned int i3 = cubeIndices[i];
-        indices.push_back(i1);
-        indices.push_back(i2);
-        indices.push_back(i3);
-        setNormal(vertices, i2, i3, i1);
-    }
-
-    return Mesh(vertices, indices);
-}
-
+//THIS IS WORKING L-SYSTEM CODE THAT I COULDNT GET SURFACE NORMALS TO WORK FOR
+//THIS GENERATES TREES PLEASE BELIEVE ME
 std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
 {
     //USING L-SYSTEMS TO GENERATE FRACTAL FLORA
@@ -334,7 +240,7 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
     for (int i = 0; i < limit; i++)
     {
         std::cout << sentence << std::endl;
-        for (int j = 0; j < sentence.size(); j++)
+        for (int j = 0; j < (int) sentence.size(); j++)
         {
             if (sentence[j] == 'F')
             {
@@ -351,28 +257,22 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
     //construct shapes based on chars in sentence
     Vertex startVertex;
     startVertex.Position = startVertexPosition;
-    for (int i = 0; i < sentence.size(); i++)
+    for (int i = 0; i < (int) sentence.size(); i++)
     {
         Vertex nextVertex;
         if (sentence[i] == 'F')
         {
             nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
-            glm::vec3 startPos = startVertex.Position;
-            flora.push_back(branch(startPos));
             startVertex = nextVertex;
         }
         else if (sentence[i] == '+')
         {
             nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
-            glm::vec3 startPos = startVertex.Position;
-            flora.push_back(branch(startPos));
             startVertex = nextVertex;
         }
         else if (sentence[i] == '-')
         {
             nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
-            glm::vec3 startPos = startVertex.Position;
-            flora.push_back(branch(startPos));
             startVertex = nextVertex;
         }
         //store location of leaf
@@ -380,8 +280,6 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
         {
             nextVertex.Position = startVertex.Position + glm::vec3(0.5, 1, 0);
             startVertex = nextVertex;
-            glm::vec3 startPos = startVertex.Position;
-            flora.push_back(branch(startPos, 1, true));
         }
         else if (sentence[i] == '[')
         {
@@ -392,22 +290,16 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
                 {
 
                     nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
-                    glm::vec3 startPos = startVertex.Position;
-                    flora.push_back(branch(startPos));
                     startVertex = nextVertex;
                 }
                 else if (sentence[i] == '+')
                 {
                     nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
-                    glm::vec3 startPos = startVertex.Position;
-                    flora.push_back(branch(startPos));
                     startVertex = nextVertex;
                 }
                 else if (sentence[i] == '-')
                 {
                     nextVertex.Position = startVertex.Position + glm::vec3(-1, 0, 0);
-                    glm::vec3 startPos = startVertex.Position;
-                    flora.push_back(branch(startPos));
                     startVertex = nextVertex;
                 }
                 //LEAF
@@ -415,8 +307,6 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
                 {
                     nextVertex.Position = startVertex.Position + glm::vec3(0.5, 1, 0);
                     startVertex = nextVertex;
-                    glm::vec3 startPos = startVertex.Position;
-                    flora.push_back(branch(startPos, 1, true));
                 }
                 i++;
             }
@@ -440,9 +330,9 @@ void setWorldVertices(std::vector<Vertex> &vertices,
     noise.SetFractalGain(gain);
     noise.SetFractalOctaves(octaves);
     noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-    std::vector<Mesh> tree;
     //construct vertex positions for mesh
     float row = 0;
+
     while (row < worldHeight)
     {
         for (float i = 0.0f; i < worldWidth; i++)
@@ -466,7 +356,7 @@ Mesh genWorld(int worldHeight, int worldWidth,
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    setWorldVertices(vertices, worldHeight, worldWidth, biome, seed, 
+    setWorldVertices(vertices, worldHeight, worldWidth, biome, seed,
                      frequency, lacunarity, gain, octaves, scale);
     setIndices(indices, vertices, worldHeight, worldWidth);
     return Mesh(vertices, indices);
@@ -491,7 +381,7 @@ Mesh genSkyBox(int worldHeight, int worldWidth)
     locations.push_back(glm::vec3(-skyBoxSize, skyBoxSize, -skyBoxSize));
     locations.push_back(glm::vec3(skyBoxSize, skyBoxSize, -skyBoxSize));
     locations.push_back(glm::vec3(skyBoxSize, skyBoxSize, skyBoxSize));
-    for (int i = 0; i < locations.size(); i++)
+    for (int i = 0; i < (int) locations.size(); i++)
     {
         Vertex vertex;
         vertex.Position = locations[i];
@@ -546,7 +436,7 @@ Mesh genLightSource()
     locations.push_back(glm::vec3(1, 1, -1));
     //front top right
     locations.push_back(glm::vec3(1, 1, 1));
-    for (int i = 0; i < locations.size(); i++)
+    for (int i = 0; i < (int) locations.size(); i++)
     {
         Vertex vertex;
         vertex.Position = locations[i];

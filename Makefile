@@ -1,4 +1,4 @@
-EXE=main
+EXE=final
 
 # Main target
 all: $(EXE)
@@ -24,17 +24,17 @@ CLEAN=rm -f $(EXE) *.o *.a
 endif
 
 # Dependencies
-main.o: main.cpp CSCIx229.h compileshaders.h camera.h mesh.h
+final.o: final.cpp CSCIx229.h compileshaders.h camera.h mesh.h
 
 #  Create archive
-CSCIx229.a:main.o compileshaders.o camera.o mesh.o
+CSCIx229.a:final.o compileshaders.o camera.o mesh.o
 	ar -rcs $@ $^
 
-compileshaders.a: main.o CSCIx229.o camera.o mesh. o
+compileshaders.a: final.o CSCIx229.o camera.o mesh. o
 	
-mesh.a: main.o CSCIx229.o camera.o compileshaders.o
+mesh.a: final.o CSCIx229.o camera.o compileshaders.o
 
-camera.a: main.o CSCIx229.o compileshaders.o mesh.o
+camera.a: final.o CSCIx229.o compileshaders.o mesh.o
 
 # Compile rules
 .c.o:
@@ -43,14 +43,14 @@ camera.a: main.o CSCIx229.o compileshaders.o mesh.o
 	g++ -c $(CFLG)  $<
 
 #  Link
-main:main.o CSCIx229.a 
+final:final.o CSCIx229.a 
 	g++ $(CFLG) -o $@ $^  $(LIBS)
 
-compileshaders:compileshaders.o main.o CSCIx229.a camera.a mesh.a
+compileshaders:compileshaders.o final.o CSCIx229.a camera.a mesh.a
 	g++ $(CFLG) -o $@ $^  $(LIBS)
-mesh:compileshaders.o main.o CSCIx229.a camera.a mesh.a
+mesh:compileshaders.o final.o CSCIx229.a camera.a mesh.a
 	g++ $(CFLG) -o $@ $^  $(LIBS)
-camera:compileshaders.o main.o CSCIx229.a camera.a mesh.a
+camera:compileshaders.o final.o CSCIx229.a camera.a mesh.a
 	g++ $(CFLG) -o $@ $^  $(LIBS)
 #  Clean
 clean:

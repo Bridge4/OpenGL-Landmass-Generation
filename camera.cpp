@@ -6,6 +6,7 @@ Camera::Camera(int width, int height, glm::vec3 position)
 	Camera::height = height;
 	Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
 	Up = glm::vec3(0.0f, 1.0f, 0.0f);
+	//Added Horizontal vector so I could implement keyboard movement of camera
 	Hor = glm::vec3(1.0f, 0.0f, 0.0f);
 	cameraMatrix = glm::mat4(1.0f);
 	Position = position;
@@ -16,20 +17,18 @@ Camera::Camera(int width, int height, glm::vec3 position)
 
 void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 {
-	// Initializes matrices since otherwise they will be the null matrix
+	//initializing matrices
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
 
-	// Makes camera look in the right direction from the right position
 	view = glm::lookAt(Position, Position + Orientation, Up);
-	// Adds perspective to the scene
+	//PERSPECTIVE PROJECTION!
 	projection = glm::perspective(glm::radians(FOVdeg), (float)width / height, nearPlane, farPlane);
-
-	// Sets new camera matrix
+	
 	cameraMatrix = projection * view;
 }
 
-void Camera::Matrix(GLuint shader, const char* uniform)
+void Camera::Matrix(GLuint shader, const char *uniform)
 {
 	// Exports camera matrix
 	glUniformMatrix4fv(glGetUniformLocation(shader, uniform), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
@@ -70,11 +69,8 @@ void Camera::Inputs(GLFWwindow *window)
 	{
 		speed = 2;
 	}
-	//reset view
-	if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
-	{
-		Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
-	}
+	//THIS IS WHAT I ADDED
+	//ADDED KEYBOARD CAMERA CONTROL
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 	{
 		Orientation = glm::rotate(Orientation, glm::radians(1.0f), Up);
@@ -86,12 +82,9 @@ void Camera::Inputs(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 	{
 		glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(1.0f), glm::normalize(glm::cross(Orientation, Up)));
-
-		// Decides whether or not the next vertical Orientation is legal or not
+		//without validating the legality of vertical orientation you get a cone-like viewing effect
 		if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
-		{
 			Orientation = newOrientation;
-		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 	{
@@ -99,9 +92,7 @@ void Camera::Inputs(GLFWwindow *window)
 
 		// Decides whether or not the next vertical Orientation is legal or not
 		if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
-		{
 			Orientation = newOrientation;
-		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
@@ -109,51 +100,32 @@ void Camera::Inputs(GLFWwindow *window)
 	}
 
 	// Handles mouse inputs
+	//MOUSE INPUTS DONE BY VICTOR NOT ME BUT THEY FOLLOW ESSENTIALLY WHAT I DID FOR THE FPS HOMEWORK
+	//https://github.com/VictorGordan/opengl-tutorials/tree/main/YoutubeOpenGL%208%20-%20Camera
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
-		// Hides mouse cursor
-		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
-		// Prevents camera from jumping on the first click
 		if (firstClick)
 		{
 			glfwSetCursorPos(window, (width / 2), (height / 2));
 			firstClick = false;
 		}
 
-		// Stores the coordinates of the cursor
 		double mouseX;
 		double mouseY;
-		// Fetches the coordinates of the cursor
+		//Get cursor position
 		glfwGetCursorPos(window, &mouseX, &mouseY);
 		std::cout << mouseX << std::endl;
-
-		// Normalizes and shifts the coordinates of the cursor such that they begin in the middle of the screen
-		// and then "transforms" them into degrees
 		float rotX = sensitivity * (float)(mouseY - (height / 2)) / height;
 		float rotY = sensitivity * (float)(mouseX - (width / 2)) / width;
 
-		// Calculates upcoming vertical change in the Orientation
 		glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, Up)));
-
-		// Decides whether or not the next vertical Orientation is legal or not
+		//Rotates up and down
 		if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
 		{
 			Orientation = newOrientation;
 		}
 
-		// Rotates the Orientation left and right
+		//Rotates left and right
 		Orientation = glm::rotate(Orientation, glm::radians(-rotY), Up);
-
-		// Sets mouse cursor to the middle of the screen so that it doesn't end up roaming around
-		//glfwSetCursorPos(window, (width / 2), (height / 2));
 	}
-	/*else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-	{
-		// Unhides cursor since camera is not looking around anymore
-		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		// Makes sure the next time the camera looks around it doesn't jump
-		firstClick = true;
-	}
-	*/
 }
