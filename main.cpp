@@ -131,7 +131,9 @@ int main(void)
     }
     glfwSetKeyCallback(window, key_callback);
     glfwMakeContextCurrent(window);
+#ifndef __APPLE__
     glewInit();
+#endif
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -149,7 +151,7 @@ int main(void)
     //to fix them anymore.
     std::vector<std::vector<Mesh> > flora;
 
-    flora.push_back(genFlora(glm::vec3(0,0,0)));
+    flora.push_back(genFlora(glm::vec3(0, 0, 0)));
 
     //LIGHT SOURCE GENERATION
     Mesh lightSource = genLightSource();
@@ -215,7 +217,7 @@ int main(void)
             world = genWorld(worldHeight, worldWidth, biome, seed, frequency, lacunarity, gain, octaves, scale);
             changeTerrain = false;
         }
-        
+
         world.Draw();
         skyBox.Draw();
         glUseProgram(light);

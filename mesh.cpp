@@ -122,11 +122,7 @@ void setIndices(std::vector<unsigned int> &indices, std::vector<Vertex> &vertice
     //limit of triangles to draw
     int limit = (worldWidth - 1) * (worldHeight - 1);
 
-<<<<<<< Updated upstream
-    for (int i = 0; i < (int) (int) vertices.size(); i += 1)
-=======
-    for (int i = 0; i < vertices.size(); i += 1)
->>>>>>> Stashed changes
+    for (int i = 0; i < (int) vertices.size(); i += 1)
     {
         if (drawnRight == limit && drawnLeft == limit)
             break;
@@ -267,28 +263,16 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
         if (sentence[i] == 'F')
         {
             nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
-<<<<<<< Updated upstream
-=======
-            glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
             startVertex = nextVertex;
         }
         else if (sentence[i] == '+')
         {
             nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
-<<<<<<< Updated upstream
-=======
-            glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
             startVertex = nextVertex;
         }
         else if (sentence[i] == '-')
         {
             nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
-<<<<<<< Updated upstream
-=======
-            glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
             startVertex = nextVertex;
         }
         //store location of leaf
@@ -296,10 +280,6 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
         {
             nextVertex.Position = startVertex.Position + glm::vec3(0.5, 1, 0);
             startVertex = nextVertex;
-<<<<<<< Updated upstream
-=======
-            glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
         }
         else if (sentence[i] == '[')
         {
@@ -310,28 +290,16 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
                 {
 
                     nextVertex.Position = startVertex.Position + glm::vec3(0, 1, 0);
-<<<<<<< Updated upstream
-=======
-                    glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
                     startVertex = nextVertex;
                 }
                 else if (sentence[i] == '+')
                 {
                     nextVertex.Position = startVertex.Position + glm::vec3(1, 0, 0);
-<<<<<<< Updated upstream
-=======
-                    glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
                     startVertex = nextVertex;
                 }
                 else if (sentence[i] == '-')
                 {
                     nextVertex.Position = startVertex.Position + glm::vec3(-1, 0, 0);
-<<<<<<< Updated upstream
-=======
-                    glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
                     startVertex = nextVertex;
                 }
                 //LEAF
@@ -339,10 +307,6 @@ std::vector<Mesh> genFlora(glm::vec3 startVertexPosition)
                 {
                     nextVertex.Position = startVertex.Position + glm::vec3(0.5, 1, 0);
                     startVertex = nextVertex;
-<<<<<<< Updated upstream
-=======
-                    glm::vec3 startPos = startVertex.Position;
->>>>>>> Stashed changes
                 }
                 i++;
             }

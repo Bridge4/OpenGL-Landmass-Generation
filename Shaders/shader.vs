@@ -12,6 +12,8 @@ out vec3 Normal;
 out vec3 crntPos;
 uniform mat4 camMatrix;
 uniform mat4 model;
+
+
 //SOURCE: https://github.com/VictorGordan/opengl-tutorials/blob/main/YoutubeOpenGL%209%20-%20Lighting/default.vert
 void main()
 {
