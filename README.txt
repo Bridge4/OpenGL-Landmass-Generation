@@ -21,7 +21,7 @@ Shift button makes all these decrease rather than increase
 
 Examples: 
 
-![alt text](https://github.com/Bridge4/OpenGL-Landmass-Generation/blob/master/opengl 1.jpg?raw=true)
+![Ex.1]opengl 1.png)
 
 What I can improve:
 
