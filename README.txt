@@ -19,6 +19,9 @@ Shift button makes all these decrease rather than increase
 -I spent a considerable amount of time teaching myself how the shader pipeline works and getting shader compilation to work which took significantly more effort and time than the homeworks for camera and lighting concepts did. 
 -I started from scratch with GLFW and learned how to adapt my code such that it worked with macOS as that was my primary development platform. 
 
+Examples: 
+
+![alt text](https://github.com/Bridge4/OpenGL-Landmass-Generation/blob/master/opengl 1.jpg?raw=true)
 
 What I can improve:
 
