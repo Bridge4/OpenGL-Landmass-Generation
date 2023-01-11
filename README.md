@@ -21,7 +21,7 @@ Shift button makes all these decrease rather than increase
 
 Examples: 
 
-![Ex.1]opengl 1.png)
+![Ex.1](opengl 1.png)
 
 What I can improve:
 
