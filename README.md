@@ -22,7 +22,10 @@ Shift button makes all these decrease rather than increase
 Examples: 
 
 ![alt text](https://github.com/Bridge4/OpenGL-Landmass-Generation/blob/master/opengl1.png?raw=true)
-
+![alt text](https://github.com/Bridge4/OpenGL-Landmass-Generation/blob/master/opengl2.png?raw=true)
+![alt text](https://github.com/Bridge4/OpenGL-Landmass-Generation/blob/master/opengl3.png?raw=true)
+![alt text](https://github.com/Bridge4/OpenGL-Landmass-Generation/blob/master/opengl4.png?raw=true)
+![alt text](https://github.com/Bridge4/OpenGL-Landmass-Generation/blob/master/opengl5.png?raw=true)
 What I can improve:
 
 -Mesh has to be redrawn each time modifications are made which results in brief frame rate drops while the new mesh is being rendered
